@@ -197,7 +197,7 @@ div.dropdown-wrapper {
     display: inline-block;
     margin-left: 75px;
     width: 320px;
-    height: 130px;
+    height: 25px;
     padding: 2px;
     position: bottom;
 }
@@ -415,7 +415,7 @@ i.europe {
     color: #AD1457;
 }
 
-.activeYear-background {
-    font-size: 80px;
+.activeDate-background {
+    font-size: 50px;
     opacity: .4;
 }

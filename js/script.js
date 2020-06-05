@@ -4,9 +4,9 @@ loadData().then(data => {
     // no country selected by default
     this.activeState = null;
     // deafultActiveYear is 2000
-    this.activeYear = '2000';
+    this.activeDate = '2020-04-26';
     let that = this;
-    const countryMap = new Map(data, updateState);
+    const countryMap = new Map(data, updateState, activeDate, 'Deaths', updateDate);
 
     // ******* TODO: PART 3 *******
     /**
@@ -34,18 +34,19 @@ loadData().then(data => {
      *  gap plot and the info box.
      *  @param year the new year we need to set to the other views
      */
-    function updateYear(year) {
-        /*
+    function updateDate(date) {
+        
         //TODO - Your code goes here - 
-        activeYear = year;
+        let translated = new Date(date*1000).toISOString().substring(0, 10);
+        activeDate = translated;
         d3.select('.slider-wrap')
             .select('div')
             .select('svg')
-            .select('text').text(year);
+            .select('text').text(translated);
         
-        d3.select("#year-title").text(year);
-        infoBox.updateTextDescription(activeCountry, year);
-        */
+        d3.select("#year-title").text(translated);
+        // infoBox.updateTextDescription(activeCountry, year);
+        
 
     }
     // Creates the view objects
@@ -99,7 +100,8 @@ async function loadFile(file) {
 }
 
 async function loadCovidData() {
-    let data = await fetch("https://api.covid19api.com/live/country/united-states/status/confirmed");
+    // let data = await fetch("https://api.covid19api.com/live/country/united-states/status/confirmed");
+    let data = await fetch("https://covidtracking.com/api/states/daily");
     let out = await data.json();
     return out;
 

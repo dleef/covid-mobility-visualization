@@ -10,8 +10,8 @@
     <script src="https://d3js.org/d3.v5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.js"></script>
     <script src="https://d3js.org/d3-geo-projection.v2.js"></script>
-    <script src="js/info_box.js" async></script>
-    <script src="js/gap_plot.js" async></script>
+    <script src="js/state_info.js" async></script>
+    <script src="js/mobility_plot.js" async></script>
     <script src="js/map.js" async></script>
     <script src="js/script.js" async></script>
 </head>
@@ -22,7 +22,7 @@
         <p class="info">Name: Daniel Leef; E-Mail: dleef@uoregon.edu; UID: 951609214</p>
     </div>
     <div class="wrapper">
-        <div class="innerWrapper">
+        <div id = "outside" class="innerWrapper">
             <div id="map-chart" class="view"></div>
             <div id="country-detail"></div>
         </div>
