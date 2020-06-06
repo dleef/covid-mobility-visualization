@@ -7,7 +7,7 @@ loadData().then(data => {
     this.activeDate = '2020-04-26';
     let that = this;
     const countryMap = new Map(data, updateState, activeDate, 'Deaths', updateDate);
-
+    const mobilityPlot = new MobilityPlot(data, 'Oregon');
     // ******* TODO: PART 3 *******
     /**
      * Calls the functions of the views that need to react to a newly selected/highlighted country
@@ -16,6 +16,7 @@ loadData().then(data => {
      */
     function updateState(state) {
             countryMap.updateHighlightClick(state);
+            mobilityPlot.updatePlot(state);
         /*
             that.activeCountry = countryID;
             worldMap.updateHighlightClick(countryID);

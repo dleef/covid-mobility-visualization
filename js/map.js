@@ -182,7 +182,7 @@ class Map {
                                         console.log("color_deaths");
                                         stat = cur.deaths;
                                         if (stat == -1) {
-                                            return "green";
+                                            return "black";
                                         }
                                         return color_deaths(stat);
                                     }
@@ -190,7 +190,7 @@ class Map {
                                         console.log("color_pos");
                                         stat = cur.positive;
                                         if (stat == -1) {
-                                            return "green";
+                                            return "black";
                                         }
                                         return color_positive(stat);
                                     }
@@ -198,7 +198,7 @@ class Map {
                                         console.log("color_hosp");
                                         stat = cur.hospitalized;
                                         if (stat == -1) {
-                                            return "green";
+                                            return "black";
                                         }
                                         return color_hospitalized(stat);
                                     }
@@ -207,7 +207,7 @@ class Map {
                                         console.log("color_deaths");
                                         stat = cur.deaths;
                                         if (stat == -1) {
-                                            return "green";
+                                            return "black";
                                         }
                                         return color_deaths(stat);
                                     }
@@ -478,5 +478,33 @@ class Map {
         //TODO - Your code goes here - 
         d3.selectAll('path').classed('selected', false);
 
+    }
+    drawLegend(min, max) {
+        // ******* TODO: PART 2*******
+        //This has been done for you but you need to call it in updatePlot()!
+        //Draws the circle legend to show size based on health data
+        let scale = d3.scaleSqrt().range([3, 20]).domain([min, max]);
+
+        let circleData = [min, max];
+
+        let svg = d3.select('.circle-legend').select('svg').select('g');
+
+        let circleGroup = svg.selectAll('g').data(circleData);
+        circleGroup.exit().remove();
+
+        let circleEnter = circleGroup.enter().append('g');
+        circleEnter.append('circle').classed('neutral', true);
+        circleEnter.append('text').classed('circle-size-text', true);
+
+        circleGroup = circleEnter.merge(circleGroup);
+
+        circleGroup.attr('transform', (d, i) => 'translate(' + ((i * (5 * scale(d))) + 20) + ', 25)');
+
+        circleGroup.select('circle').attr('r', (d) => scale(d));
+        circleGroup.select('circle').attr('cx', '0');
+        circleGroup.select('circle').attr('cy', '0');
+        let numText = circleGroup.select('text').text(d => new Intl.NumberFormat().format(d));
+
+        numText.attr('transform', (d) => 'translate(' + ((scale(d)) + 10) + ', 0)');
     }
 }

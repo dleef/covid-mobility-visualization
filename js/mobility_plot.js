@@ -9,52 +9,61 @@ class PlotData {
      * @param region country region
      * @param circleSize value for r from data object chosen for circleSizeIndicator
      */
-    constructor(country, xVal, yVal, id, region, circleSize) {
-        this.country = country;
+    constructor(state, xVal, yVal, id, type) {
+        this.state = state;
         this.xVal = xVal;
         this.yVal = yVal;
         this.id = id;
-        this.region = region;
-        this.circleSize = circleSize;
+        this.type = type;
     }
 }
 
-/** Class representing the scatter plot view. */
-class GapPlot {
+class DateData {
+
+    constructor(work_change, retail_change, park_change, grocery_change, res_change, work_count, retail_count, park_count, grocery_count, res_count) {
+        this.work_change = work_change;
+        this.retail_change = retail_change;
+        this.park_change = park_change;
+        this.grocery_change = grocery_change;
+        this.res_change = res_change;
+        this.work_count = work_count;
+        this.retail_count = retail_count;
+        this.park_count = park_count;
+        this.grocery_count = grocery_count;
+        this.res_count = res_count;
+    }
+}
+
+class MobilityPlot {
 
     /**
-     * Creates an new GapPlot Object
-     *
-     * For part 2 of the homework, you only need to worry about the first parameter.
-     * You will be updating the plot with the data in updatePlot,
-     * but first you need to draw the plot structure that you will be updating.
-     *
-     * Set the data as a variable that will be accessible to you in updatePlot()
-     * Call the drawplot() function after you set it up to draw the plot structure on GapPlot load
-     *
-     * We have provided the dimensions for you!
      *
      * @param updateCountry a callback function used to notify other parts of the program when the selected
      * country was updated (clicked)
      * @param updateYear a callback function used to notify other parts of the program when a year was updated
      * @param activeYear the year for which the data should be drawn initially
      */
-    constructor(data, updateCountry, updateYear, activeYear) {
+    // all that's needed is data since it's showing the mobility trends for that state
+    constructor(data, activeState) {
 
         // ******* TODO: PART 2 *******
 
         this.margin = { top: 20, right: 20, bottom: 60, left: 80 };
         this.width = 810 - this.margin.left - this.margin.right;
-        this.height = 500 - this.margin.top - this.margin.bottom;
-        this.activeYear = activeYear;
-
-        this.data = data;
-
-        this.updateCountry = updateCountry;
-        this.updateYear = updateYear;
-        //YOUR CODE HERE  
+        this.height = 600 - this.margin.top - this.margin.bottom;
+        this.min_date = null;
+        this.max_date = null;
+        this.by_state = {};
+        this.state_by_date = {};
+        this.state_max = {};
+        this.state_min = {};
+        this.activeState = activeState;
+        this.mobility_data = this.USAData(data);
+        this.averageData();
+        //YOUR CODE HERE    
         this.drawPlot();
-        this.drawYearBar();
+        this.drawLegend();
+       // this.drawYearBar();
 
         // ******* TODO: PART 3 *******
         /**
@@ -68,32 +77,128 @@ class GapPlot {
 
     }
 
-    /**
-     * Sets up the plot, axes, and slider,
-     */
+    USAData(data) {
+        var output = [];
+        let dat = data.mobility;    
+        dat.forEach(d => {
+            if (d.country_region_code == "US") {
+                output.push(d);
+                if (d.sub_region_1 in this.by_state) {
+                    this.by_state[d.sub_region_1].push(d);
+                }
+                else {
+                    this.by_state[d.sub_region_1] = [];
+                    this.by_state[d.sub_region_1].push(d);
+
+                }
+            }
+        })
+        return output;
+    }
+
+    averageData() {
+        var min = false;
+        var max = false;
+        for (var key in this.by_state) {
+            let cur = this.by_state[key];
+            var date_dict = {};
+            for (var i = 0; i < cur.length; i++) {
+
+                let entry = cur[i];
+                let date = entry.date;
+                if (i == 0 && !min) {
+                    this.min_date = date;
+                    min = true;
+                }
+                if (i == cur.length - 1 && !max) {
+                    this.max_date =date;
+                    max = true;
+                }
+                    if (date in date_dict) {
+
+                        let orig = date_dict[date];
+                        let new_input = orig;
+                        if (entry.grocery_and_pharmacy_percent_change_from_baseline != "") {
+                            let groc = parseFloat(new_input.grocery_change);
+                            let new_groc = (groc + parseFloat(entry.grocery_and_pharmacy_percent_change_from_baseline));
+                            new_input.grocery_change = "" + new_groc;
+                            new_input.grocery_count += 1;
+                        }
+                        if (entry.parks_percent_change_from_baseline != "") {
+                            let park = parseFloat(new_input.park_change);
+                            let new_park = (park + parseFloat(entry.parks_percent_change_from_baseline));
+                            new_input.park_change = "" + new_park;
+                            new_input.park_count += 1;
+                        }
+                        if (entry.residential_percent_change_from_baseline != "") {
+                            let res = parseFloat(new_input.res_change);
+                            let new_res = (res + parseFloat(entry.residential_percent_change_from_baseline));
+                            new_input.res_change = "" + new_res;
+                            new_input.res_count += 1;
+                        }
+
+                        if (entry.retail_and_recreation_percent_change_from_baseline != "") {
+                            let retail = parseFloat(new_input.retail_change);
+                            let new_retail = (retail + parseFloat(entry.retail_and_recreation_percent_change_from_baseline));
+                            new_input.retail_change = "" + new_retail;
+                            new_input.retail_count += 1;
+                        }
+                        if (entry.workplaces_percent_change_from_baseline != "") {
+                            let work = parseFloat(new_input.work_change);
+                            let new_work = (work + parseFloat(entry.workplaces_percent_change_from_baseline));
+                            new_input.work_change = "" + new_work;
+                            new_input.work_count += 1;
+                        }
+                        date_dict[date] = new_input;
+
+                    }
+                    else {
+                        let work = entry.workplaces_percent_change_from_baseline;
+                        let retail = entry.retail_and_recreation_percent_change_from_baseline;
+                        let parks = entry.parks_percent_change_from_baseline;
+                        let grocery = entry.grocery_and_pharmacy_percent_change_from_baseline;
+                        let res = entry.residential_percent_change_from_baseline;
+                        date_dict[date] = new DateData(work == "" ? "0" : work, retail == "" ? "0" : retail, parks == "" ? "0" : parks, grocery == "" ? "0" : grocery, res == "" ? "0" : res, 1, 1, 1, 1, 1);
+                    }
+
+                }
+
+                this.state_by_date[key] = date_dict;
+
+        }
+        // delete heavily affects performance, might have to get rid of
+        console.log(this.state_by_date);
+        for (var key in this.state_by_date) {
+            var cur_date_dict = this.state_by_date[key];
+            var max = 0;
+            var min = 0;
+            for (var d in cur_date_dict) {
+                let entry = cur_date_dict[d];
+                entry.retail_change /= entry.retail_count;
+                entry.work_change /= entry.work_count;
+                entry.res_change /= entry.res_count;
+                entry.grocery_change /= entry.grocery_count;
+                entry.park_change /= entry.park_count;
+               
+                delete cur_date_dict[d];
+                cur_date_dict[d] = entry;
+                min = Math.min(min, Math.min(entry.retail_change, Math.min(entry.work_change, Math.min(entry.res_change, Math.min(entry.grocery_change, entry.park_change)))));
+                max = Math.max(max, Math.max(entry.retail_change, Math.max(entry.work_change, Math.max(entry.res_change, Math.max(entry.grocery_change, entry.park_change)))));
+            }
+            delete this.state_by_date[key];
+            this.state_by_date[key] = cur_date_dict;
+            this.state_max[key] = max;
+            this.state_min[key] = min;
+        }
+        console.log(this.state_by_date);
+    }
 
     drawPlot() {
-        // ******* TODO: PART 2 *******
-        /**
-         You will be setting up the plot for the scatterplot.
-         Here you will create axes for the x and y data that you will be selecting and calling in updatePlot
-         (hint): class them.
 
-         Main things you should set up here:
-         1). Create the x and y axes
-         2). Create the activeYear background text
-
-
-         The dropdown menus have been created for you!
-
-         */
         
         
         d3.select('#scatter-plot')
             .append('div').attr('id', 'chart-view');
-
-        d3.select('#scatter-plot')
-            .append('div').attr('id', 'activeYear-bar');
 
         d3.select('#chart-view')
             .append('div')
@@ -105,7 +210,9 @@ class GapPlot {
             .attr("width", this.width + this.margin.left + this.margin.right)
             .attr("height", this.height + this.margin.top + this.margin.bottom);
 
-        let svgGroup = d3.select('#chart-view').select('.plot-svg').append('g').classed('wrapper-group', true);
+
+
+        // let svgGroup = d3.select('#chart-view').select('.plot-svg').append('g').classed('wrapper-group', true);
 
         //YOUR CODE HERE  
         
@@ -113,10 +220,11 @@ class GapPlot {
         d3.select("#chart-view").select('svg').append('g').attr('id', 'x-axis').attr('transform', 'translate(0, 400)');
         d3.select("#chart-view").select('svg').append('g').attr('id', 'y-axis').attr('transform', 'translate(100, 0)');
 
-        d3.select("#chart-view").select('svg').append("text").attr('id', 'year-title').attr("dx", 250).attr("dy", 75).attr('class', 'activeYear-background').text(this.activeYear);
 
+        this.setAxes();
         /* This is the setup for the dropdown menu- no need to change this */
 
+        /* 
         let dropdownWrap = d3.select('#chart-view').append('div').classed('dropdown-wrapper', true);
 
         let cWrap = dropdownWrap.append('div').classed('dropdown-panel', true);
@@ -145,6 +253,7 @@ class GapPlot {
 
         yWrap.append('div').attr('id', 'dropdown_y').classed('dropdown', true).append('div').classed('dropdown-content', true)
             .append('select');
+        */
 
         d3.select('#chart-view')
             .append('div')
@@ -155,167 +264,158 @@ class GapPlot {
         
     }
 
-    /**
-     * Renders the plot for the parameters specified
-     *
-     * @param activeYear the year for which to render
-     * @param xIndicator identifies the values to use for the x axis
-     * @param yIndicator identifies the values to use for the y axis
-     * @param circleSizeIndicator identifies the values to use for the circle size
-     */
-    updatePlot(activeYear, xIndicator, yIndicator, circleSizeIndicator) {
-        // ******* TODO: PART 2 *******
-        this.xIndicator = xIndicator;
-        this.yIndicator = yIndicator;
-        this.circleSizeIndicator = circleSizeIndicator;
-        /*
-        You will be updating the scatterplot from the data. hint: use the #chart-view div
-        
-        *** Structuring your PlotData objects ***
-        You need to start by mapping the data specified by the parameters to the PlotData Object
-        Your PlotData object is specified at the top of the file
-        You will need get the data specified by the x, y and circle size parameters from the data passed
-        to the GapPlot constructor
-
-        *** Setting the scales for your x, y, and circle data ***
-        For x and y data, you should get the overall max of the whole data set for that data category,
-        not just for the activeYear.
-
-        ***draw circles***
-        draw the circles with a scaled area from the circle data, with cx from your x data and cy from y data
-        You need to size the circles from your circleSize data, we have provided a function for you to do this
-        called circleSizer. Use this when you assign the 'r' attribute.
-
-        ***Tooltip for the bubbles***
-        You need to assign a tooltip to appear on mouse-over of a country bubble to show the name of the country.
-        We have provided the mouse-over for you, but you have to set it up
-        Hint: you will need to call the tooltipRender function for this.
-
-        *** call the drawLegend() and drawDropDown()
-        These will draw the legend and the drop down menus in your data
-        Pay attention to the parameters needed in each of the functions
-        
-        */
-
-        /**
-         *  Function to determine the circle radius by circle size
-         *  This is the function to size your circles, you don't need to do anything to this
-         *  but you will call it and pass the circle data as the parameter.
-         * 
-         * @param d the data value to encode
-         * @returns {number} the radius
-         */
-        var cmin = 2000000;
-        var cmax = 0;
-        this.data[circleSizeIndicator].forEach(p => {
-            for (var i = 1800; i <= 2020; i++) {
-                if (p[i] != undefined && p[i] < cmin) {
-                    cmin = p[i];
-                }                
-                if (p[i] != undefined && p[i] > cmax) {
-                    cmax = p[i];
-                }
-            }
-        })
-        let circleSizer = function(d) {
-            let cScale = d3.scaleSqrt().range([3, 20]).domain([cmin, cmax]);
-            return d.circleSize ? cScale(d.circleSize) : 3;
-        };
-        ///////////////////////////////////////////////////////////////////
-        
-        //YOUR CODE HERE  
-        let nameArray = this.data.population.map(d => d.geo);
-        let populationData = this.data.population;
-
-        var plotData = [];
-        let xData = this.data[xIndicator];
-        let yData = this.data[yIndicator];
-        let cData = this.data[circleSizeIndicator];
-        xData.forEach(xd => {
-            // Get matching points
-            for (var i = 0; i < yData.length; i++) {
-                if (yData[i].geo == xd.geo) {
-                    for (var j = 0; j < cData.length; j++) {
-                        if (cData[j].geo == xd.geo) {
-                        let index = nameArray.indexOf(xd.geo);
-                        let yd = yData[i];
-                        let cd = cData[j];
-                        if (index > -1) {
-                            let region = populationData[index].region;  
-                            plotData.push(new PlotData(xd.country, xd[activeYear], yd[activeYear], xd.geo, region, cd[activeYear]))
-                        }
-                        }
-                    }
-                }
-            }
-
-        })
-
-        var xmax = 0;
-        var ymax = 0;
-        
-        this.data[xIndicator].forEach(p => {
-            for (var i = 1800; i <= 2020; i++) {
-                if (p[i] != undefined && p[i] > xmax) {
-                    xmax = p[i];
-                }
-            }
-        })
-        this.data[yIndicator].forEach(p => {
-            for (var i = 1800; i <= 2020; i++) {
-                if (p[i] != undefined && p[i] > ymax) {
-                    ymax = p[i];
-                }
-            }
-        })
+    setAxes() {
         let xscale = d3
-        .scaleLinear()
-        .domain([0, xmax])
+        .scaleTime()
+        .domain([new Date(this.min_date), new Date(this.max_date)])
         .range([100, 600]);
       
         let yscale = d3
         .scaleLinear()
-        .domain([ymax, 0])
-        .range([0, 400]);
+        .domain([this.state_max[this.activeState], this.state_min[this.activeState]])
+        .range([0, 400]);     
         
         var x_axis = d3.axisBottom().scale(xscale);
         var y_axis = d3.axisLeft().scale(yscale);
 
-        d3.select("#x-axis").call(x_axis);
-        d3.select("#y-axis").call(y_axis);
-                
-        let update = c => this.updateCountry(c);
+        d3.select("#x-axis").attr("transform", "translate(0," + yscale(0) + ")").call(x_axis);
+        d3.select("#y-axis").call(y_axis).select("text").attr("x", -175).attr("y", -50).attr("transform", "rotate(-90)").attr("fill", "black").text("Percent Change in Activity").style("font-size", "25px").style("text-anchor", "middle");
+        //.select("text").attr("x", 280).attr("y", 40).attr("fill", "black").text("Time").style("font-size", "25px");
+    }
 
+    updatePlot(activeState) {
+
+        let edit = activeState.replace("-", " ");
+        // Process data and add to usable list
+        let to_be_processed = this.state_by_date[edit];
+        var parks = [];
+        var work = [];
+        var retail = [];
+        var residential = [];
+        var grocery = [];
+        var all = [];
+        for (var key in to_be_processed) {
+            var to_add_parks = {
+                date: new Date(key),
+                data: parseInt(to_be_processed[key].park_change)
+            }
+            var to_add_work = {
+                date: new Date(key),
+                data: to_be_processed[key].work_change
+            }
+            var to_add_residential = {
+                date: new Date(key),
+                data: to_be_processed[key].res_change
+            }
+            var to_add_retail = {
+                date: new Date(key),
+                data: to_be_processed[key].retail_change
+            }
+            var to_add_grocery = {
+                date: new Date(key),
+                data: to_be_processed[key].grocery_change
+            }
+            var to_add_all = {
+                date: new Date(key),
+                parks: to_be_processed[key].park_change,
+                work: to_be_processed[key].work_change,
+                residential: to_be_processed[key].res_change,
+                retail: to_be_processed[key].retail_change,
+                grocery: to_be_processed[key].grocery_change
+            }
+            parks.push(to_add_parks);
+            work.push(to_add_work);
+            retail.push(to_add_retail);
+            residential.push(to_add_residential);
+            grocery.push(to_add_grocery)
+            all.push(to_add_all);
+        }
+
+
+        this.activeState = activeState;
+        let xscale = d3
+        .scaleTime()
+        .domain([new Date(this.min_date), new Date(this.max_date)])
+        .range([100, 600]);
+      
+        let yscale = d3
+        .scaleLinear()
+        .domain([this.state_max[edit], this.state_min[edit]])
+        .range([0, 400]);     
+        
+
+
+
+        let lineGen = d3
+        .line()
+        .x((d, i) => xscale(d.date))
+        .y(d => yscale(d.data));
+
+        let tooltipr = (c, type) => this.tooltipRender(c, type);
         var tooltip = d3.select("#chart-view")
         .select("div")
         .style("opacity", 0)
         .attr("class", "tooltip");
 
-        let tooltipr = c => this.tooltipRender(c);
-        let env = d3.select("#chart-view").select("svg");
-        env.selectAll("circle").data(plotData)
-        .join(
-            enter => enter.append("circle")
-                .attr('class', (d, i) => d.region)
-                .attr('id', (d, i) => d.id.toUpperCase())
-                .attr('cx', (d, i) => 100 + d.xVal*(500.0/xmax))
-                .attr('cy', (d, i) => 400 - d.yVal*(400.0/ymax))
-                .attr('r', (d, i) => circleSizer(d))
-                .on("mouseover", function(d, i) {tooltip.style("opacity", 0.8).html(tooltipr(d)).style("left", (d3.mouse(this)[0]+750) + "px")
-                .style("top", (d3.mouse(this)[1]+75) + "px");})
-                .on("mouseout", function(d, i) {tooltip.style("opacity", 0);}) 
-                .on("click", function(d, i) {update(d.id.toUpperCase())}),
-            update => update
-                .attr('class', (d, i) => d.region)
-                .attr('id', (d, i) => d.id.toUpperCase())
-                .attr('cx', (d, i) => 100 + d.xVal*(500.0/xmax))
-                .attr('cy', (d, i) => 400 - d.yVal*(400.0/ymax))
-                .attr('r', (d, i) => circleSizer(d)),
-            exit => exit.remove() 
-        );
+        /*
+        console.log(lineGen(parks));
+        d3.select("#chart-view").select("svg").append("path").attr("id", "parks").attr('class', 'parks')
+        .transition().duration(1000).attr("d", lineGen(parks)).on("click", function(d, i) {
+            tooltip.style("opacity", 0.8).html(tooltipr(d, this.id)).style("left", (d3.mouse(this)[0]+750) + "px");
+        });
 
-        this.drawDropDown(xIndicator, yIndicator, circleSizeIndicator);
-        this.drawLegend(cmin, cmax);
+        d3.select("#chart-view").select("svg").select("#parks").selectAll("dot").data(parks).enter().append("circle")
+        .attr("r", 1).attr("cx", function(d) { return xscale(d.date) }).attr("cy", function(d) {return yscale(d.data)}). on("mouseover", function(d, i) {
+            console.log(this);
+            tooltip.style("opacity", 0.8).html(tooltipr(d, this.id)).style("left", (d3.mouse(this)[0]+750) + "px");
+
+        }).on("mouseout", function(d, i) {tooltip.style("opacity", 0);}) 
+        */
+        if (d3.select("#parks").empty()) {
+            console.log(parks);
+            console.log(lineGen(parks));
+            d3.select("#chart-view").select("svg").append("path").attr("id", "parks").attr('class', 'parks')
+            .transition().duration(1000).attr("d", lineGen(parks));
+    
+            console.log(lineGen(work));
+            d3.select("#chart-view").select("svg").append("path").attr("id", "work").attr('class', 'work')
+            .transition().duration(1000).attr("d", lineGen(work));
+            
+            console.log(lineGen(grocery));
+            d3.select("#chart-view").select("svg").append("path").attr("id", "grocery").attr('class', 'grocery')
+            .transition().duration(1000).attr("d", lineGen(grocery));
+            
+            console.log(lineGen(retail));
+
+            d3.select("#chart-view").select("svg").append("path").attr("id", "retail").attr('class', 'retail')
+            .transition().duration(1000).attr("d", lineGen(retail));
+            
+            console.log(lineGen(residential));
+
+            d3.select("#chart-view").select("svg").append("path").attr("id", "residential").attr('class', 'residential')
+            .transition().duration(1000).attr("d", lineGen(residential));
+
+        }
+        else {  
+            console.log(parks);
+
+            d3.select("#parks").transition().duration(1000).attr("d", lineGen(parks));
+    
+            d3.select("#work").transition().duration(1000).attr("d", lineGen(work));
+            
+            d3.select("#grocery").transition().duration(1000).attr("d", lineGen(grocery));
+            
+            d3.select("#retail").transition().duration(1000).attr("d", lineGen(retail));
+            
+            d3.select("#residential").transition().duration(1000).attr("d", lineGen(residential));
+
+
+        }
+        d3.select("#chart-view").select("svg").selectAll("path").data(all).enter().append("circle").attr("r", 0.5).attr("cx", function(d, i) {
+            return xscale(d.date);
+        }).attr("cy", function(d, i) {
+
+        })
 
     }
 
@@ -470,39 +570,20 @@ class GapPlot {
         
     }
 
-    /**
-     * Draws the legend for the circle sizes
-     *
-     * @param min minimum value for the sizeData
-     * @param max maximum value for the sizeData
-     */
-    drawLegend(min, max) {
-        // ******* TODO: PART 2*******
-        //This has been done for you but you need to call it in updatePlot()!
-        //Draws the circle legend to show size based on health data
-        let scale = d3.scaleSqrt().range([3, 20]).domain([min, max]);
+    drawLegend() {
 
-        let circleData = [min, max];
+        let keys = ["Retail Stores", "Grocery Stores", "Parks", "Residential Areas", "Workplaces"];
+        var color = d3.scaleOrdinal().domain(keys).range(d3.schemeSet1);
 
-        let svg = d3.select('.circle-legend').select('svg').select('g');
+        let legend = d3.select("#chart-view").select("svg").append("g");
+        legend.attr("class", "legend").attr("x", 500).attr("y" , 50).selectAll("rect")
+        .data(keys).enter().append("rect").attr("x", 75).attr("y", function(d, i) {return 450 + (i*22)})
+        .attr("width", 20).attr("height", 20).style("fill", function(d) {return color(d)})
 
-        let circleGroup = svg.selectAll('g').data(circleData);
-        circleGroup.exit().remove();
+        legend.attr("class", "legend").attr("x", 500).attr("y" , 50).selectAll("text")
+        .data(keys).enter().append("text").attr("x", 100).attr("y", function(d, i) {return 465 + (i*22)})
+        .attr("width", 20).attr("height", 20).style("fill", function(d) {return color(d)}).text(function(d) {return d})
 
-        let circleEnter = circleGroup.enter().append('g');
-        circleEnter.append('circle').classed('neutral', true);
-        circleEnter.append('text').classed('circle-size-text', true);
-
-        circleGroup = circleEnter.merge(circleGroup);
-
-        circleGroup.attr('transform', (d, i) => 'translate(' + ((i * (5 * scale(d))) + 20) + ', 25)');
-
-        circleGroup.select('circle').attr('r', (d) => scale(d));
-        circleGroup.select('circle').attr('cx', '0');
-        circleGroup.select('circle').attr('cy', '0');
-        let numText = circleGroup.select('text').text(d => new Intl.NumberFormat().format(d));
-
-        numText.attr('transform', (d) => 'translate(' + ((scale(d)) + 10) + ', 0)');
     }
 
     /**
@@ -546,8 +627,27 @@ class GapPlot {
      * @param data 
      * @returns {string}
      */
-    tooltipRender(data) {
-        let text = "<h2>" + data['country'] + "</h2>";
+    tooltipRender(d, type) {
+        var text;
+        if (type == "parks") {
+            text = "<h2> Park Change: " + d.parks + " on " + d.date + "</h2>";
+
+        }
+        else if (type == "retail") {
+            text = "<h2> Retail Change: " + d.retail + " on " + d.date + "</h2>";
+
+        }
+        else if (type == "work") {
+            text = "<h2> Workplace Change: " + d.work + " on " + d.date + "</h2>";
+
+        }
+        else if (type == "grocery") {
+            text = "<h2> Grocery Change: " + d.grocery + " on " + d.date + "</h2>";
+
+        }
+        else {
+            text = "<h2> Residential Change: " + d.residential + " on " + d.date + "</h2>";
+        }
         return text;
     }
 
