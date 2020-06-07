@@ -56,7 +56,7 @@ class Map {
         this.by_date = {};
         this.min_date = "2020-03-07";
         this.max_date = null;
-        this.covid_data = this.parsePerState(data.covid);
+        this.covid_data = this.parsePerState(data.covid, activedate);
         this.population_data = data.population;
         this.state_data = null;
         this.updateState = updateState;
@@ -64,6 +64,7 @@ class Map {
         this.map_indicator = mapindicator;
         this.updateDate = updateDate;
         this.activeState = activeState;
+        this.drawn = false;
         this.state_abbrev = {
             'Arizona' : 'AZ',
             'Alabama' : 'AL',
@@ -292,7 +293,7 @@ class Map {
     }
     
     // filter this.by_date to only include entries with 50 or more states entered
-    parsePerState(cdata) {  
+    parsePerState(cdata, activeDate) {  
         var output = []
         var max_deaths = 0;
         var max_positive = 0;
@@ -323,22 +324,22 @@ class Map {
                 this.by_date[date] = [];
                 this.by_date[date].push(dat);
             }
-            if (c['positive'] > max_positive) {
+            if (c['positive'] > max_positive && date == activeDate) {
                 max_positive = c['positive'];
             }
-            if (c['positive'] < min_positive) {
+            if (c['positive'] < min_positive && date == activeDate) {
                 min_positive = c['positive'];
             }
-            if (c['hospitalizedCurrently'] > max_hospitalized) {
+            if (c['hospitalizedCurrently'] > max_hospitalized && date == activeDate) {
                 max_hospitalized = c['hospitalizedCurrently'];
             }
-            if (c['hospitalizedCurrently'] < min_hospitalized) {
+            if (c['hospitalizedCurrently'] < min_hospitalized && date == activeDate) {
                 min_hospitalized = c['hospitalizedCurrently'];
             }
-            if (c['death'] > max_deaths) {
+            if (c['death'] > max_deaths && date == activeDate) {
                 max_deaths = c['death'];
             }
-            if (c['death'] < min_deaths) {
+            if (c['death'] < min_deaths && date == activeDate) {
                 min_deaths = c['death'];
             }
 
@@ -353,6 +354,7 @@ class Map {
         this.min_deaths = min_deaths;
         this.min_positive = min_positive;
         this.min_hospitalized = min_hospitalized;
+
         var sorted = output.sort(function(a, b) {
             a.date - b.date;
         });
@@ -370,7 +372,7 @@ class Map {
 
         // default to max deaths
         var color = d3.scaleLinear()
-        .domain([0, this.max_deaths])
+        .domain([0, this.max_positive])
         .range(["lightblue", "red"]); 
 
         let graticule = d3.geoGraticule();
@@ -396,7 +398,7 @@ class Map {
 
                         if (cdata[j].province == abbrev) {
 
-                            stat = cdata[j].deaths;
+                            stat = cdata[j].positive;
                             break;
 
                         }
@@ -419,6 +421,16 @@ class Map {
         });
         this.drawYearBar();
         this.updateHighlightClick(this.activeState);
+        if (this.map_indicator == "Positive Cases") {
+            this.drawLegend(this.min_positive, this.max_positive);
+        }
+        else if (this.map_indicator == "Deaths") {
+            this.drawLegend(this.min_deaths, this.max_deaths);
+        }
+        else  {
+            this.drawLegend(this.min_hospitalized, this.max_hospitalized);
+        }
+
     }
 
         /**
@@ -491,20 +503,37 @@ class Map {
 
     }
     drawLegend(min, max) {
-        console.log("Min: " + min + ", max: " + max);
-        var defs = d3.select("#map-chart").select("svg").append("defs");
-        var linearGradient = defs.append("linearGradient").attr("id", "linear-gradient");
-        linearGradient
-        .attr("x1", "0%")
-        .attr("y1", "0%")
-        .attr("x2", "100%")
-        .attr("y2", "0%");
-        linearGradient.append("stop").attr("offset", "0%").attr("stop-color", "lightblue");
-        linearGradient.append("stop").attr("offset", "100%").attr("stop-color", "red");
-        d3.select("#map-chart").select("svg").append("rect").attr("width", 300).attr("height", 20).style("fill", "url(#linear-gradient)");
-        d3.select("#map-chart").select("svg").append("text").attr("text-anchor", "start").attr("x", 4)
-        .attr("y", 14).text(min);
-        d3.select("#map-chart").select("svg").append("text").attr("text-anchor", "end").attr("x", 300)
-        .attr("y", 14).text(max);
+        if (max == 0) {
+            min = "Data Unavailable";
+            max = "";
+        }
+        if (min == max) {
+            max = "-";
+        }
+        if (!this.drawn) {
+            var defs = d3.select("#map-chart").select("svg").append("defs");
+            var linearGradient = defs.append("linearGradient").attr("id", "linear-gradient");
+            linearGradient
+            .attr("x1", "0%")
+            .attr("y1", "0%")
+            .attr("x2", "100%")
+            .attr("y2", "0%");
+            linearGradient.append("stop").attr("offset", "0%").attr("stop-color", "lightblue");
+            linearGradient.append("stop").attr("offset", "100%").attr("stop-color", "red");
+            d3.select("#map-chart").select("svg").append("rect").attr("x", 15).attr("width", 300).attr("height", 20).style("fill", "url(#linear-gradient)");
+            d3.select("#map-chart").select("svg").append("text").attr("id", "min_key").attr("text-anchor", "start").attr("x", 19)
+            .attr("y", 14).text(min);
+            d3.select("#map-chart").select("svg").append("text").attr("id", "max_key").attr("text-anchor", "end").attr("x", 315)
+            .attr("y", 14).text(max);
+            d3.select("#map-chart").select("svg").append("rect").attr("x", 350).attr("width", 20).attr("height", 20).style("fill", "black");
+            d3.select("#map-chart").select("svg").append("text").attr("text-anchor", "end").attr("x", 510)
+            .attr("y", 14).text(" = Data Unavailable");
+            this.drawn = true;
+        }
+        else {
+        d3.select("#min_key").text(min);
+        d3.select("#max_key").text(max);
+    
+        }
     }
 }
