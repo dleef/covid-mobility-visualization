@@ -464,7 +464,7 @@ class MobilityPlot {
 
     let svg = d3.select("#chart-view").select("svg").append("g");
     let width = 800 - this.margin.left - this.margin.right;
-    let height = 675 - this.margin.top - this.margin.bottom;
+    let height = 685 - this.margin.top - this.margin.bottom;
     var mouseG = svg.append("g")
       .attr("class", "mouse-over-effects");
     mouseG.append("path") // this is the black vertical line to follow mouse
