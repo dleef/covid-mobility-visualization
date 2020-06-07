@@ -13,7 +13,8 @@ loadData().then(data => {
     function updateState(state) {
             countryMap.updateHighlightClick(state);
             mobilityPlot.updatePlot(state);
-        /*
+
+            /*
             that.activeCountry = countryID;
             worldMap.updateHighlightClick(countryID);
             gapPlot.updateHighlightClick(countryID);

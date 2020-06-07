@@ -66,6 +66,7 @@ class MobilityPlot {
         this.drawLegend();
 
 
+
     }
 
     USAData(data) {
@@ -370,12 +371,97 @@ class MobilityPlot {
 
         }
         this.setAxes();
-        this.setHoverLine(all_hover, colors, xscale, yscale, this.activeState);
+        if (this.nothover) {
+            this.setHoverLine(all_hover, colors, xscale, yscale, this.activeState);
+            this.nothover = false;
+        }
+        else {
+            this.updateHoverLine(xscale, yscale, this.activeState)
+        }
+
+    }
+
+    updateHoverLine(xscale, yscale, astate) {
+        let width = 800 - this.margin.left - this.margin.right;
+        let height = 675 - this.margin.top - this.margin.bottom;
+        var lines = document.getElementsByClassName('mobility_line');
+
+        this.mg.append('svg:rect') // append a rect to catch mouse movements on canvas
+        .attr('width', width) // can't catch mouse events on a g element
+        .attr('height', height)
+        .attr("x", 100)
+        .attr('fill', 'none')
+        .attr('pointer-events', 'all')
+        .on('mouseout', function() { // on mouse out hide line, circles and text
+          d3.select(".mouse-line")
+            .style("opacity", "0");
+          d3.selectAll(".mouse-per-line circle")
+            .style("opacity", "0");
+          d3.selectAll(".mouse-per-line text")
+            .style("opacity", "0");
+          d3.selectAll(".mouse-per-line rect")
+            .style("opacity", "0");
+          d3.select("#state-title").text(astate);
+  
+        })
+        .on('mouseover', function() { // on mouse in show line, circles and text
+          d3.select(".mouse-line")
+            .style("opacity", "1");
+          d3.selectAll(".mouse-per-line circle")
+            .style("opacity", "1");
+          d3.selectAll(".mouse-per-line text")
+            .style("opacity", "1");
+        })
+        .on('mousemove', function() { // mouse moving over canvas
+          var mouse = d3.mouse(this);
+          d3.select(".mouse-line")
+            .attr("d", function() {
+              var d = "M" + mouse[0] + "," + height;
+              d += " " + mouse[0] + "," + 0;
+              return d;
+            });
+  
+          d3.selectAll(".mouse-per-line")
+            .attr("transform", function(d, i) {
+              var xDate = xscale.invert(mouse[0]),
+                  bisect = d3.bisector(function(d) { return d.date; }).right;
+                  bisect(d.values, xDate);
+              let new_xdate = new Date(xDate);
+              d3.select("#state-title").text(astate + ", " + new_xdate.toISOString().substring(0,10));
+              var beginning = 0,
+                  end = lines[i].getTotalLength(),
+                  target = null;
+              var pos = null;
+              while (true){
+                target = Math.floor((beginning + end) / 2);
+                pos = lines[i].getPointAtLength(target);
+                if ((target === end || target === beginning) && pos.x !== mouse[0]) {
+                    break;
+                }
+                if (pos.x > mouse[0])      end = target;
+                else if (pos.x < mouse[0]) beginning = target;
+                else break; //position found
+              }            
+              
+              d3.select(this).select('text')
+                .text(yscale.invert(pos.y).toFixed(2) + "%").style("font-weight", "bolder").style("font-size", "14px");
+  
+                
+              d3.select(this).insert("rect", "text")
+              .attr("y", -10).attr("x", 10)
+              .attr("width", 45).attr("height", 20)
+              .style("fill", "white").style("opacity", 0.5);
+              
+              return "translate(" + mouse[0] + "," + pos.y +")";
+            });
+        });
+
+
     }
 
 
     setHoverLine(data, colors, xscale, yscale, astate) {
-    
+
     let svg = d3.select("#chart-view").select("svg").append("g");
     let width = 800 - this.margin.left - this.margin.right;
     let height = 675 - this.margin.top - this.margin.bottom;
@@ -449,9 +535,6 @@ class MobilityPlot {
                 bisect(d.values, xDate);
             let new_xdate = new Date(xDate);
             d3.select("#state-title").text(astate + ", " + new_xdate.toISOString().substring(0,10));
-            console.log(lines[i]);
-            console.log(lines);
-            console.log(i);
             var beginning = 0,
                 end = lines[i].getTotalLength(),
                 target = null;
@@ -479,6 +562,7 @@ class MobilityPlot {
             return "translate(" + mouse[0] + "," + pos.y +")";
           });
       });
+      this.mg = mouseG;
     }
 
 
