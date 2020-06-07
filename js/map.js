@@ -382,6 +382,12 @@ class Map {
 
         d3.select("#map-chart").select('svg').append("text").attr('id', 'year-title').attr("dx", 250).attr("dy", 75).attr('class', 'activeDate-background').text(this.active_date);
 
+        var tooltip = d3.select("#map-chart")
+        .select("div")
+        .style("opacity", 0)
+        .attr("class", "tooltip");
+
+        let tooltipr = c => this.tooltipRender(c);
 
         let cdata = this.by_date[this.active_date];
         this.state_data = states;
@@ -408,15 +414,11 @@ class Map {
                 })
                 .on("click", function() {
                     update(this.id);
-                });
-                /* 
-                .on("mouseover", function() {
-                    d3.select(this).style("opacity", 0.9);
                 })
-                .on("mouseout", function() {
-                    d3.select(this).style("opacity", 1);
-                });
-                */
+                .on("mouseover", function(d, i) {tooltip.style("opacity", 0.8).html(tooltipr(name)).style("left", (d3.mouse(this)[0]-20) + "px")
+                .style("top", (d3.mouse(this)[1]+80) + "px");})
+                .on("mouseout", function(d, i) {tooltip.style("opacity", 0);});
+                
 
         });
         this.drawYearBar();
@@ -535,5 +537,9 @@ class Map {
         d3.select("#max_key").text(max);
     
         }
+    }
+    tooltipRender(data) {
+        let text = "<h2>" + data + "</h2>";
+        return text;
     }
 }
