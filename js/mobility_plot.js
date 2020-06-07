@@ -225,6 +225,9 @@ class MobilityPlot {
 
         d3.select("#x-axis").attr("transform", "translate(0," + yscale(0) + ")").call(x_axis);
         d3.select("#y-axis").call(y_axis);
+        console.log("CALLED");
+        d3.select("#chart-view").select("svg").append("text").attr("transform", "rotate(-90)").attr("y", 30)
+        .attr("x", -300).attr("dy", "1em").style("text-anchor", "middle").attr("font-size", "20px").text("Percent Change in Activity");
         //.select("text").attr("x", 280).attr("y", 40).attr("fill", "black").text("Time").style("font-size", "25px");
     }
 
