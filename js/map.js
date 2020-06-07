@@ -1,25 +1,4 @@
-/**
- * Data structure for the data associated with an individual country.
- * the CountryData class will be used to keep the data for drawing your map.
- * You will use the region to assign a class to color the map!
- */
-class CountryData {
-    /**
-     *
-     * @param type refers to the geoJSON type- countries are considered features
-     * @param properties contains the value mappings for the data
-     * @param geometry contains array of coordinates to draw the country paths
-     * @param region the country region
-     */
-    constructor(type, id, properties, geometry, region) {
 
-        this.type = type;
-        this.id = id;
-        this.properties = properties;
-        this.geometry = geometry;
-        this.region = region;
-    }
-}
 
 class CovidData {
     /**
@@ -40,24 +19,14 @@ class CovidData {
 
 }
 
-/** Class representing the map view. */
 class Map {
 
-    /**
-     * Creates a Map Object
-     *
-     * @param data the full dataset
-     * @param updateCountry a callback function used to notify other parts of the program when the selected
-     * country was updated (clicked)
-     */
     constructor(data, updateState, activedate, mapindicator, updateDate, activeState) {
-        // ******* TODO: PART I *******
         this.projection = d3.geoAlbersUsa().scale(800).translate([380, 225]);
         this.by_date = {};
         this.min_date = "2020-03-07";
         this.max_date = null;
         this.covid_data = this.parsePerState(data.covid, activedate);
-        this.population_data = data.population;
         this.state_data = null;
         this.updateState = updateState;
         this.active_date = activedate;
@@ -130,34 +99,14 @@ class Map {
         .domain([this.min_hospitalized, this.max_hospitalized])
         .range(["lightblue", "red"]); 
         let date = new Date(time*1000).toISOString().substring(0, 10);
-        this.map_indicator = input;
         this.active_date = date;
-        let min_val = 100000000;
-        let max_val = 0;
-
-        
+        this.map_indicator = input;
         if (date in this.by_date) {
         
         let cdata = this.by_date[date];
         let clength = cdata.length;
         this.state_data.features.forEach(state => {
                     let name = state.properties.NAME;
-                    var pop;
-                    var color_pop;
-                    if (input == "Positive / Population") {
-                    for (var j = 0; j < this.population_data.length; j++) {
-                        let p = this.population_data[j];
-                        if (p['State'] == name) {
-                            pop = p['2018 Population'];
-                            break;
-                        }
-
-                    }
-                    }
-
-                    color_pop = d3.scaleLinear()
-                    .domain([0, pop])
-                    .range(["lightblue", "red"]); 
                     let new_name = name.replace(" ", "-");
                     let abbrev = this.state_abbrev[name];
                         d3.select("#" + new_name).
@@ -166,81 +115,51 @@ class Map {
                             for (var i = 0; i < clength; i++) {
                                 let cur = cdata[i];
                                 if (cur.province == abbrev) {
-                                    /* 
-                                    if (input == "Positive / Population") {
-                                        console.log("color_pop");
-                                        stat = cur.positive;
-                                        if (stat == -1) {
-                                            return "green";
-                                        }
-                                        return color_pop(stat);
-                                    }
-                                    */
+
                                     if (input == "Deaths") {
-                                        console.log("color_deaths");
                                         stat = cur.deaths;
                                         if (stat == -1) {
                                             return "black";
-                                        }
-                                        if (stat > max_val) {
-                                            max_val = stat;
-                                        }
-                                        if (stat < min_val) {
-                                            min_val = stat;
                                         }
                                         return color_deaths(stat);
                                     }
                                     else if (input == "Positive Cases") {
-                                        console.log("color_pos");
                                         stat = cur.positive;
                                         if (stat == -1) {
                                             return "black";
                                         }
-                                        if (stat > max_val) {
-                                            max_val = stat;
-                                        }
-                                        if (stat < min_val) {
-                                            min_val = stat;
-                                        }
                                         return color_positive(stat);
                                     }
                                     else if (input == "Hospitalizations") {
-                                        console.log("color_hosp");
                                         stat = cur.hospitalized;
                                         if (stat == -1) {
                                             return "black";
                                         }
-                                        if (stat > max_val) {
-                                            max_val = stat;
-                                        }
-                                        if (stat < min_val) {
-                                            min_val = stat;
-                                        }
                                         return color_hospitalized(stat);
                                     }
-                                    // Defaults to deaths
                                     else {
-                                        console.log("color_deaths");
                                         stat = cur.deaths;
                                         if (stat == -1) {
                                             return "black";
-                                        }
-                                        if (stat > max_val) {
-                                            max_val = stat;
-                                        }
-                                        if (stat < min_val) {
-                                            min_val = stat;
                                         }
                                         return color_deaths(stat);
                                     }
                                 }
                             }
-                            //return color(stat);
                         })
         });
 
     }
-        this.drawLegend(min_val, max_val);
+
+    if (input == "Deaths") {
+        this.drawLegend(this.min_deaths, this.max_deaths);
+    }
+    else if (input == "Hospitalizations") {
+        this.drawLegend(this.min_hospitalized, this.max_hospitalized);
+    }
+    else {
+        this.drawLegend(this.min_positive, this.max_positive);
+    }
     }
 
     createDropdown(inputIndicator) {
@@ -293,7 +212,7 @@ class Map {
     }
     
     // filter this.by_date to only include entries with 50 or more states entered
-    parsePerState(cdata, activeDate) {  
+    parsePerState(cdata) {  
         var output = []
         var max_deaths = 0;
         var max_positive = 0;
@@ -324,22 +243,22 @@ class Map {
                 this.by_date[date] = [];
                 this.by_date[date].push(dat);
             }
-            if (c['positive'] > max_positive && date == activeDate) {
+            if (c['positive'] > max_positive && c['positive'] != null) {
                 max_positive = c['positive'];
             }
-            if (c['positive'] < min_positive && date == activeDate) {
+            if (c['positive'] < min_positive && c['positive'] != null) {
                 min_positive = c['positive'];
             }
-            if (c['hospitalizedCurrently'] > max_hospitalized && date == activeDate) {
+            if (c['hospitalizedCurrently'] > max_hospitalized && c['hospitalizedCurrently'] != null) {
                 max_hospitalized = c['hospitalizedCurrently'];
             }
-            if (c['hospitalizedCurrently'] < min_hospitalized && date == activeDate) {
+            if (c['hospitalizedCurrently'] < min_hospitalized && c['hospitalizedCurrently'] != null) {
                 min_hospitalized = c['hospitalizedCurrently'];
             }
-            if (c['death'] > max_deaths && date == activeDate) {
+            if (c['death'] > max_deaths && c['death'] != null) {
                 max_deaths = c['death'];
             }
-            if (c['death'] < min_deaths && date == activeDate) {
+            if (c['death'] < min_deaths && c['death'] != null) {
                 min_deaths = c['death'];
             }
 
@@ -423,6 +342,7 @@ class Map {
         });
         this.drawYearBar();
         this.updateHighlightClick(this.activeState);
+
         if (this.map_indicator == "Positive Cases") {
             this.drawLegend(this.min_positive, this.max_positive);
         }
@@ -460,16 +380,12 @@ class Map {
         let sliderText = sliderLabel.append('text').text(this.active_date);
 
         let update = date => {
-          //  this.updatePlot(year, this.xIndicator, this.yIndicator, this.circleSizeIndicator);
-            // this.updateYear(year);
             this.changeMap(this.map_indicator, date);
             this.updateDate(date);
         }
-        console.log(yearSlider);
         sliderText.attr('x', scale(new Date(this.active_date).getTime()/1000));
         sliderText.attr('y', 25);
        
-        console.log(sliderText);
         yearSlider.on('input', function() {
             const value = this.value;
             this.active_date = value;
@@ -479,20 +395,8 @@ class Map {
         
     }
 
-
-    /**
-     * Highlights the selected conutry and region on mouse click
-     * @param activeCountry the country ID of the country to be rendered as selected/highlighted
-     */
     updateHighlightClick(activeState) {
         let new_name = activeState.replace(" ", "-");
-        // ******* TODO: PART 3*******
-        // Assign selected class to the target country and corresponding region
-        // Hint: If you followed our suggestion of using classes to style
-        // the colors and markers for countries/regions, you can use
-        // d3 selection and .classed to set these classes on here.
-        //
-        console.log(d3.select("#" + new_name));
         d3.selectAll("path").classed('selected', false);
         d3.select("#"+new_name).classed('selected', true);
 

@@ -1,14 +1,4 @@
-/** Data structure for the data associated with an individual country. */
 class PlotData {
-    /**
-     *
-     * @param country country name from the x data object
-     * @param xVal value from the data object chosen for x at the active year
-     * @param yVal value from the data object chosen for y at the active year
-     * @param id country id
-     * @param region country region
-     * @param circleSize value for r from data object chosen for circleSizeIndicator
-     */
     constructor(state, xVal, yVal, id, type) {
         this.state = state;
         this.xVal = xVal;
@@ -36,17 +26,7 @@ class DateData {
 
 class MobilityPlot {
 
-    /**
-     *
-     * @param updateCountry a callback function used to notify other parts of the program when the selected
-     * country was updated (clicked)
-     * @param updateYear a callback function used to notify other parts of the program when a year was updated
-     * @param activeYear the year for which the data should be drawn initially
-     */
-    // all that's needed is data since it's showing the mobility trends for that state
     constructor(data, activeState) {
-
-        // ******* TODO: PART 2 *******
 
         this.margin = { top: 20, right: 20, bottom: 60, left: 80 };
         this.width = 1010 - this.margin.left - this.margin.right;
@@ -61,12 +41,8 @@ class MobilityPlot {
         this.nothover = true;
         this.mobility_data = this.USAData(data);
         this.averageData();
-        //YOUR CODE HERE    
         this.drawPlot();
         this.drawLegend();
-
-
-
     }
 
     USAData(data) {
@@ -158,8 +134,8 @@ class MobilityPlot {
                 this.state_by_date[key] = date_dict;
 
         }
-        // delete heavily affects performance, might have to get rid of
-        console.log(this.state_by_date);
+
+
         for (var key in this.state_by_date) {
             var cur_date_dict = this.state_by_date[key];
             var max = 0;
@@ -182,7 +158,7 @@ class MobilityPlot {
             this.state_max[key] = max;
             this.state_min[key] = min;
         }
-        console.log(this.state_by_date);
+
     }
 
     drawPlot() {
@@ -194,11 +170,6 @@ class MobilityPlot {
             .attr("width", this.width + this.margin.left + this.margin.right)
             .attr("height", this.height + this.margin.top + this.margin.bottom);
 
-        // let svgGroup = d3.select('#chart-view').select('.plot-svg').append('g').classed('wrapper-group', true);
-
-        //YOUR CODE HERE  
-        
-        // SET AXES
         d3.select("#chart-view").select('svg').append('g').attr('id', 'x-axis').attr('transform', 'translate(0, 400)');
         d3.select("#chart-view").select('svg').append('g').attr('id', 'y-axis').attr('transform', 'translate(100, 0)');
 
@@ -225,16 +196,13 @@ class MobilityPlot {
 
         d3.select("#x-axis").attr("transform", "translate(0," + yscale(0) + ")").call(x_axis);
         d3.select("#y-axis").call(y_axis);
-        console.log("CALLED");
         d3.select("#chart-view").select("svg").append("text").attr("transform", "rotate(-90)").attr("y", 30)
         .attr("x", -300).attr("dy", "1em").style("text-anchor", "middle").attr("font-size", "20px").text("Percent Change in Activity");
-        //.select("text").attr("x", 280).attr("y", 40).attr("fill", "black").text("Time").style("font-size", "25px");
     }
-
+å
     updatePlot(activeState) {
 
         let edit = activeState.replace("-", " ");
-        // Process data and add to usable list
         let to_be_processed = this.state_by_date[edit];
         var parks = [];
         var work = [];
@@ -334,33 +302,23 @@ class MobilityPlot {
 
 
         if (d3.select("#parks").empty()) {
-            console.log(parks);
-            console.log(lineGen(parks));
             d3.select("#chart-view").select("svg").append("path").attr("id", "parks").attr('class', 'mobility_line')
             .style("stroke", "green").style("stroke-width", "2px").style("fill", "none").transition().duration(1000).attr("d", lineGen(parks));
     
-            console.log(lineGen(work));
             d3.select("#chart-view").select("svg").append("path").attr("id", "work").attr('class', 'mobility_line')
             .style("stroke", "orange").style("stroke-width", "2px").style("fill", "none").transition().duration(1000).attr("d", lineGen(work));
             
-            console.log(lineGen(grocery));
             d3.select("#chart-view").select("svg").append("path").attr("id", "grocery").attr('class', 'mobility_line')
             .style("stroke", "blue").style("stroke-width", "2px").style("fill", "none").transition().duration(1000).attr("d", lineGen(grocery));
             
-            console.log(lineGen(retail));
-
             d3.select("#chart-view").select("svg").append("path").attr("id", "retail").attr('class', 'mobility_line')
             .style("stroke", "red").style("stroke-width", "2px").style("fill", "none").transition().duration(1000).attr("d", lineGen(retail));
             
-            console.log(lineGen(residential));
-
             d3.select("#chart-view").select("svg").append("path").attr("id", "residential").attr('class', 'mobility_line')
             .style("stroke", "purple").style("stroke-width", "2px").style("fill", "none").transition().duration(1000).attr("d", lineGen(residential));
 
         }
         else {  
-            console.log(parks);
-
             d3.select("#parks").attr("class", "mobility_line").transition().duration(1000).attr("d", lineGen(parks));
     
             d3.select("#work").attr("class", "mobility_line").transition().duration(1000).attr("d", lineGen(work));
@@ -384,18 +342,19 @@ class MobilityPlot {
 
     }
 
+
     updateHoverLine(xscale, yscale, astate) {
         let width = 800 - this.margin.left - this.margin.right;
         let height = 675 - this.margin.top - this.margin.bottom;
         var lines = document.getElementsByClassName('mobility_line');
 
-        this.mg.append('svg:rect') // append a rect to catch mouse movements on canvas
-        .attr('width', width) // can't catch mouse events on a g element
+        this.mg.append('svg:rect')
+        .attr('width', width)
         .attr('height', height)
         .attr("x", 100)
         .attr('fill', 'none')
         .attr('pointer-events', 'all')
-        .on('mouseout', function() { // on mouse out hide line, circles and text
+        .on('mouseout', function() {
           d3.select(".mouse-line")
             .style("opacity", "0");
           d3.selectAll(".mouse-per-line circle")
@@ -407,7 +366,7 @@ class MobilityPlot {
           d3.select("#state-title").text(astate);
   
         })
-        .on('mouseover', function() { // on mouse in show line, circles and text
+        .on('mouseover', function() {
           d3.select(".mouse-line")
             .style("opacity", "1");
           d3.selectAll(".mouse-per-line circle")
@@ -415,7 +374,7 @@ class MobilityPlot {
           d3.selectAll(".mouse-per-line text")
             .style("opacity", "1");
         })
-        .on('mousemove', function() { // mouse moving over canvas
+        .on('mousemove', function() {
           var mouse = d3.mouse(this);
           d3.select(".mouse-line")
             .attr("d", function() {
@@ -443,7 +402,7 @@ class MobilityPlot {
                 }
                 if (pos.x > mouse[0])      end = target;
                 else if (pos.x < mouse[0]) beginning = target;
-                else break; //position found
+                else break;
               }            
               
               d3.select(this).select('text')
@@ -462,7 +421,7 @@ class MobilityPlot {
 
     }
 
-
+    // reference: https://bl.ocks.org/larsenmtl/e3b8b7c2ca4787f77d78f58d41c3da91
     setHoverLine(data, colors, xscale, yscale, astate) {
 
     let svg = d3.select("#chart-view").select("svg").append("g");
@@ -470,7 +429,7 @@ class MobilityPlot {
     let height = 685 - this.margin.top - this.margin.bottom;
     var mouseG = svg.append("g")
       .attr("class", "mouse-over-effects");
-    mouseG.append("path") // this is the black vertical line to follow mouse
+    mouseG.append("path") 
       .attr("class", "mouse-line")
       .style("stroke", "black")
       .style("stroke-width", "1px")
@@ -496,13 +455,13 @@ class MobilityPlot {
     mousePerLine.append("text")
       .attr("transform", "translate(10,3)");
     
-    mouseG.append('svg:rect') // append a rect to catch mouse movements on canvas
-      .attr('width', width) // can't catch mouse events on a g element
+    mouseG.append('svg:rect')
+      .attr('width', width)
       .attr('height', height)
       .attr("x", 100)
       .attr('fill', 'none')
       .attr('pointer-events', 'all')
-      .on('mouseout', function() { // on mouse out hide line, circles and text
+      .on('mouseout', function() {
         d3.select(".mouse-line")
           .style("opacity", "0");
         d3.selectAll(".mouse-per-line circle")
@@ -514,7 +473,7 @@ class MobilityPlot {
         d3.select("#state-title").text(astate);
 
       })
-      .on('mouseover', function() { // on mouse in show line, circles and text
+      .on('mouseover', function() {
         d3.select(".mouse-line")
           .style("opacity", "1");
         d3.selectAll(".mouse-per-line circle")
@@ -522,7 +481,7 @@ class MobilityPlot {
         d3.selectAll(".mouse-per-line text")
           .style("opacity", "1");
       })
-      .on('mousemove', function() { // mouse moving over canvas
+      .on('mousemove', function() {
         var mouse = d3.mouse(this);
         d3.select(".mouse-line")
           .attr("d", function() {
@@ -583,71 +542,6 @@ class MobilityPlot {
         .data(keys).enter().append("text").attr("x", function(d, i) { return 125 + 150*i - (d.length*3)}).attr("y", 33)
         .attr("width", 20).attr("height", 20).style("fill", function(d) {return color(d)}).text(function(d) {return d})
         .style("font-size", "15px");
-    }
-
-    /**
-     * Reacts to a highlight/click event for a country; draws that country darker
-     * and fades countries on other continents out
-     * @param activeCountry
-     */
-    updateHighlightClick(activeCountry) {
-        /* ******* TODO: PART 3*******
-        //You need to assign selected class to the target country and corresponding region
-        // Hint: If you followed our suggestion of using classes to style
-        // the colors and markers for countries/regions, you can use
-        // d3 selection and .classed to set these classes on here.
-        // You will not be calling this directly in the gapPlot class,
-        // you will need to call it from the updateHighlight function in script.js
-        */
-        // this.activeCountry = activeCountry;
-        let region = d3.select('#chart-view').select('#' + activeCountry)._groups[0][0].className.baseVal;
-        d3.select('#chart-view').selectAll('circle').style("opacity", 0.2);
-        d3.select('#chart-view').selectAll('.' + region).style("opacity", 1);
-        d3.select('#chart-view').select('#' + activeCountry).classed('selected-country', true);
-
-    }
-
-    /**
-     * Clears any highlights
-     */
-    clearHighlight() {
-        // ******* TODO: PART 3*******
-        // Clear the map of any colors/markers; You can do this with inline styling or by
-        // defining a class style in styles.css
-
-        // Hint: If you followed our suggestion of using classes to style
-        // the colors and markers for hosts/teams/winners, you can use
-        // d3 selection and .classed to set these classes off here.
-        d3.select('#chart-view').selectAll('circle').style("opacity", 1).classed('selected-country', false);
-    }
-
-    /**
-     * Returns html that can be used to render the tooltip.
-     * @param data 
-     * @returns {string}
-     */
-    tooltipRender(d, type) {
-        var text;
-        if (type == "parks") {
-            text = "<h2> Park Change: " + d.parks + " on " + d.date + "</h2>";
-
-        }
-        else if (type == "retail") {
-            text = "<h2> Retail Change: " + d.retail + " on " + d.date + "</h2>";
-
-        }
-        else if (type == "work") {
-            text = "<h2> Workplace Change: " + d.work + " on " + d.date + "</h2>";
-
-        }
-        else if (type == "grocery") {
-            text = "<h2> Grocery Change: " + d.grocery + " on " + d.date + "</h2>";
-
-        }
-        else {
-            text = "<h2> Residential Change: " + d.residential + " on " + d.date + "</h2>";
-        }
-        return text;
     }
 
 }
