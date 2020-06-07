@@ -1,13 +1,9 @@
 loadData().then(data => {
-    console.log(data);
     
-    // no country selected by default
-    this.activeState = null;
-    // deafultActiveYear is 2000
     this.activeDate = '2020-04-26';
-    let that = this;
-    const countryMap = new Map(data, updateState, activeDate, 'Deaths', updateDate);
+    const countryMap = new Map(data, updateState, activeDate, 'Positive Cases', updateDate, 'Oregon');
     const mobilityPlot = new MobilityPlot(data, 'Oregon');
+    mobilityPlot.updatePlot('Oregon');
     // ******* TODO: PART 3 *******
     /**
      * Calls the functions of the views that need to react to a newly selected/highlighted country
@@ -46,7 +42,6 @@ loadData().then(data => {
             .select('text').text(translated);
         
         d3.select("#year-title").text(translated);
-        // infoBox.updateTextDescription(activeCountry, year);
         
 
     }

@@ -49,8 +49,8 @@ class MobilityPlot {
         // ******* TODO: PART 2 *******
 
         this.margin = { top: 20, right: 20, bottom: 60, left: 80 };
-        this.width = 810 - this.margin.left - this.margin.right;
-        this.height = 600 - this.margin.top - this.margin.bottom;
+        this.width = 1010 - this.margin.left - this.margin.right;
+        this.height = 800 - this.margin.top - this.margin.bottom;
         this.min_date = null;
         this.max_date = null;
         this.by_state = {};
@@ -58,21 +58,12 @@ class MobilityPlot {
         this.state_max = {};
         this.state_min = {};
         this.activeState = activeState;
+        this.nothover = true;
         this.mobility_data = this.USAData(data);
         this.averageData();
         //YOUR CODE HERE    
         this.drawPlot();
         this.drawLegend();
-       // this.drawYearBar();
-
-        // ******* TODO: PART 3 *******
-        /**
-         For part 4 of the homework, you will be using the other 3 parameters.
-         * assign the highlightUpdate function as a variable that will be accessible to you in updatePlot()
-         * assign the dragUpdate function as a variable that will be accessible to you in updatePlot()
-         */
-
-        //YOUR CODE HERE  
 
 
     }
@@ -194,23 +185,13 @@ class MobilityPlot {
     }
 
     drawPlot() {
-
-        
-        
         d3.select('#scatter-plot')
             .append('div').attr('id', 'chart-view');
-
-        d3.select('#chart-view')
-            .append('div')
-            .attr("class", "tooltip")
-            .style("opacity", 0);
 
         d3.select('#chart-view')
             .append('svg').classed('plot-svg', true)
             .attr("width", this.width + this.margin.left + this.margin.right)
             .attr("height", this.height + this.margin.top + this.margin.bottom);
-
-
 
         // let svgGroup = d3.select('#chart-view').select('.plot-svg').append('g').classed('wrapper-group', true);
 
@@ -221,46 +202,9 @@ class MobilityPlot {
         d3.select("#chart-view").select('svg').append('g').attr('id', 'y-axis').attr('transform', 'translate(100, 0)');
 
 
-        this.setAxes();
-        /* This is the setup for the dropdown menu- no need to change this */
+       this.setAxes();
+       d3.select("#chart-view").select('svg').append("text").attr('id', 'state-title').attr("dx", 300).attr("dy", 100).attr('class', 'activeState-background')
 
-        /* 
-        let dropdownWrap = d3.select('#chart-view').append('div').classed('dropdown-wrapper', true);
-
-        let cWrap = dropdownWrap.append('div').classed('dropdown-panel', true);
-
-        cWrap.append('div').classed('c-label', true)
-            .append('text')
-            .text('Circle Size');
-
-        cWrap.append('div').attr('id', 'dropdown_c').classed('dropdown', true).append('div').classed('dropdown-content', true)
-            .append('select');
-
-        let xWrap = dropdownWrap.append('div').classed('dropdown-panel', true);
-
-        xWrap.append('div').classed('x-label', true)
-            .append('text')
-            .text('X Axis Data');
-
-        xWrap.append('div').attr('id', 'dropdown_x').classed('dropdown', true).append('div').classed('dropdown-content', true)
-            .append('select');
-
-        let yWrap = dropdownWrap.append('div').classed('dropdown-panel', true);
-
-        yWrap.append('div').classed('y-label', true)
-            .append('text')
-            .text('Y Axis Data');
-
-        yWrap.append('div').attr('id', 'dropdown_y').classed('dropdown', true).append('div').classed('dropdown-content', true)
-            .append('select');
-        */
-
-        d3.select('#chart-view')
-            .append('div')
-            .classed('circle-legend', true)
-            .append('svg')
-            .append('g')
-            .attr('transform', 'translate(10, 0)');
         
     }
 
@@ -268,18 +212,18 @@ class MobilityPlot {
         let xscale = d3
         .scaleTime()
         .domain([new Date(this.min_date), new Date(this.max_date)])
-        .range([100, 600]);
+        .range([100, 800]);
       
         let yscale = d3
         .scaleLinear()
         .domain([this.state_max[this.activeState], this.state_min[this.activeState]])
-        .range([0, 400]);     
+        .range([80, 600]);     
         
         var x_axis = d3.axisBottom().scale(xscale);
         var y_axis = d3.axisLeft().scale(yscale);
 
         d3.select("#x-axis").attr("transform", "translate(0," + yscale(0) + ")").call(x_axis);
-        d3.select("#y-axis").call(y_axis).select("text").attr("x", -175).attr("y", -50).attr("transform", "rotate(-90)").attr("fill", "black").text("Percent Change in Activity").style("font-size", "25px").style("text-anchor", "middle");
+        d3.select("#y-axis").call(y_axis);
         //.select("text").attr("x", 280).attr("y", 40).attr("fill", "black").text("Time").style("font-size", "25px");
     }
 
@@ -294,6 +238,7 @@ class MobilityPlot {
         var residential = [];
         var grocery = [];
         var all = [];
+        var all_hover = [];
         for (var key in to_be_processed) {
             var to_add_parks = {
                 date: new Date(key),
@@ -330,245 +275,212 @@ class MobilityPlot {
             grocery.push(to_add_grocery)
             all.push(to_add_all);
         }
+        var p = {
+            name: "Parks",
+            values: parks
+        }
+        var w = {
+            name: "Work",
+            values: work
+        }
+        var r = {
+            name: "Retail",
+            values: retail
+        }
+        var res = {
+            name: "Residential",
+            values: residential
+        }
+        var g = {
+            name: "Grocery",
+            values: grocery
+        }
 
+        all_hover.push(p);
+        all_hover.push(w);
+        all_hover.push(r);
+        all_hover.push(res);
+        all_hover.push(g);
 
-        this.activeState = activeState;
+        var colors = {};
+        colors["Parks"] = "green";
+        colors["Grocery"] = "purple";
+        colors["Retail"] = "blue";
+        colors["Residential"] = "red";
+        colors["Work"] = "orange";
+
+        this.activeState = edit;
         let xscale = d3
         .scaleTime()
         .domain([new Date(this.min_date), new Date(this.max_date)])
-        .range([100, 600]);
+        .range([100, 800]);
       
         let yscale = d3
         .scaleLinear()
         .domain([this.state_max[edit], this.state_min[edit]])
-        .range([0, 400]);     
+        .range([80, 600]);     
         
-
-
 
         let lineGen = d3
         .line()
         .x((d, i) => xscale(d.date))
         .y(d => yscale(d.data));
 
-        let tooltipr = (c, type) => this.tooltipRender(c, type);
-        var tooltip = d3.select("#chart-view")
-        .select("div")
-        .style("opacity", 0)
-        .attr("class", "tooltip");
+        d3.select("#state-title").text(this.activeState);
 
-        /*
-        console.log(lineGen(parks));
-        d3.select("#chart-view").select("svg").append("path").attr("id", "parks").attr('class', 'parks')
-        .transition().duration(1000).attr("d", lineGen(parks)).on("click", function(d, i) {
-            tooltip.style("opacity", 0.8).html(tooltipr(d, this.id)).style("left", (d3.mouse(this)[0]+750) + "px");
-        });
 
-        d3.select("#chart-view").select("svg").select("#parks").selectAll("dot").data(parks).enter().append("circle")
-        .attr("r", 1).attr("cx", function(d) { return xscale(d.date) }).attr("cy", function(d) {return yscale(d.data)}). on("mouseover", function(d, i) {
-            console.log(this);
-            tooltip.style("opacity", 0.8).html(tooltipr(d, this.id)).style("left", (d3.mouse(this)[0]+750) + "px");
-
-        }).on("mouseout", function(d, i) {tooltip.style("opacity", 0);}) 
-        */
         if (d3.select("#parks").empty()) {
             console.log(parks);
             console.log(lineGen(parks));
-            d3.select("#chart-view").select("svg").append("path").attr("id", "parks").attr('class', 'parks')
-            .transition().duration(1000).attr("d", lineGen(parks));
+            d3.select("#chart-view").select("svg").append("path").attr("id", "parks").attr('class', 'mobility_line')
+            .style("stroke", "green").style("stroke-width", "2px").style("fill", "none").transition().duration(1000).attr("d", lineGen(parks));
     
             console.log(lineGen(work));
-            d3.select("#chart-view").select("svg").append("path").attr("id", "work").attr('class', 'work')
-            .transition().duration(1000).attr("d", lineGen(work));
+            d3.select("#chart-view").select("svg").append("path").attr("id", "work").attr('class', 'mobility_line')
+            .style("stroke", "orange").style("stroke-width", "2px").style("fill", "none").transition().duration(1000).attr("d", lineGen(work));
             
             console.log(lineGen(grocery));
-            d3.select("#chart-view").select("svg").append("path").attr("id", "grocery").attr('class', 'grocery')
-            .transition().duration(1000).attr("d", lineGen(grocery));
+            d3.select("#chart-view").select("svg").append("path").attr("id", "grocery").attr('class', 'mobility_line')
+            .style("stroke", "blue").style("stroke-width", "2px").style("fill", "none").transition().duration(1000).attr("d", lineGen(grocery));
             
             console.log(lineGen(retail));
 
-            d3.select("#chart-view").select("svg").append("path").attr("id", "retail").attr('class', 'retail')
-            .transition().duration(1000).attr("d", lineGen(retail));
+            d3.select("#chart-view").select("svg").append("path").attr("id", "retail").attr('class', 'mobility_line')
+            .style("stroke", "red").style("stroke-width", "2px").style("fill", "none").transition().duration(1000).attr("d", lineGen(retail));
             
             console.log(lineGen(residential));
 
-            d3.select("#chart-view").select("svg").append("path").attr("id", "residential").attr('class', 'residential')
-            .transition().duration(1000).attr("d", lineGen(residential));
+            d3.select("#chart-view").select("svg").append("path").attr("id", "residential").attr('class', 'mobility_line')
+            .style("stroke", "purple").style("stroke-width", "2px").style("fill", "none").transition().duration(1000).attr("d", lineGen(residential));
 
         }
         else {  
             console.log(parks);
 
-            d3.select("#parks").transition().duration(1000).attr("d", lineGen(parks));
+            d3.select("#parks").attr("class", "mobility_line").transition().duration(1000).attr("d", lineGen(parks));
     
-            d3.select("#work").transition().duration(1000).attr("d", lineGen(work));
+            d3.select("#work").attr("class", "mobility_line").transition().duration(1000).attr("d", lineGen(work));
             
-            d3.select("#grocery").transition().duration(1000).attr("d", lineGen(grocery));
+            d3.select("#grocery").attr("class", "mobility_line").transition().duration(1000).attr("d", lineGen(grocery));
             
-            d3.select("#retail").transition().duration(1000).attr("d", lineGen(retail));
+            d3.select("#retail").attr("class", "mobility_line").transition().duration(1000).attr("d", lineGen(retail));
             
-            d3.select("#residential").transition().duration(1000).attr("d", lineGen(residential));
+            d3.select("#residential").attr("class", "mobility_line").transition().duration(1000).attr("d", lineGen(residential));
 
 
         }
-        d3.select("#chart-view").select("svg").selectAll("path").data(all).enter().append("circle").attr("r", 0.5).attr("cx", function(d, i) {
-            return xscale(d.date);
-        }).attr("cy", function(d, i) {
-
-        })
-
+        this.setAxes();
+        this.setHoverLine(all_hover, colors, xscale, yscale, this.activeState);
     }
 
-    /**
-     * Setting up the drop-downs
-     * @param xIndicator identifies the values to use for the x axis
-     * @param yIndicator identifies the values to use for the y axis
-     * @param circleSizeIndicator identifies the values to use for the circle size
-     */
-    drawDropDown(xIndicator, yIndicator, circleSizeIndicator) {
 
-        let that = this;
-        let dropDownWrapper = d3.select('.dropdown-wrapper');
-        let dropData = [];
+    setHoverLine(data, colors, xscale, yscale, astate) {
+    
+    let svg = d3.select("#chart-view").select("svg").append("g");
+    let width = 800 - this.margin.left - this.margin.right;
+    let height = 675 - this.margin.top - this.margin.bottom;
+    var mouseG = svg.append("g")
+      .attr("class", "mouse-over-effects");
+    mouseG.append("path") // this is the black vertical line to follow mouse
+      .attr("class", "mouse-line")
+      .style("stroke", "black")
+      .style("stroke-width", "1px")
+      .style("opacity", "0");
+      
+    var lines = document.getElementsByClassName('mobility_line');
 
-        for (let key in this.data) {
-            dropData.push({
-                indicator: key,
-                indicator_name: this.data[key][0].indicator_name
-            });
-        }
+    var mousePerLine = mouseG.selectAll('.mouse-per-line')
+      .data(data)
+      .enter()
+      .append("g")
+      .attr("class", "mouse-per-line");
 
-        /* CIRCLE DROPDOWN */
-        let dropC = dropDownWrapper.select('#dropdown_c').select('.dropdown-content').select('select');
+    mousePerLine.append("circle")
+      .attr("r", 7)
+      .style("stroke", function(d) {
+        return colors[d.name];
+      })
+      .style("fill", "none")
+      .style("stroke-width", "1px")
+      .style("opacity", "0");
 
-        let optionsC = dropC.selectAll('option')
-            .data(dropData);
+    mousePerLine.append("text")
+      .attr("transform", "translate(10,3)");
+    
+    mouseG.append('svg:rect') // append a rect to catch mouse movements on canvas
+      .attr('width', width) // can't catch mouse events on a g element
+      .attr('height', height)
+      .attr("x", 100)
+      .attr('fill', 'none')
+      .attr('pointer-events', 'all')
+      .on('mouseout', function() { // on mouse out hide line, circles and text
+        d3.select(".mouse-line")
+          .style("opacity", "0");
+        d3.selectAll(".mouse-per-line circle")
+          .style("opacity", "0");
+        d3.selectAll(".mouse-per-line text")
+          .style("opacity", "0");
+        d3.selectAll(".mouse-per-line rect")
+          .style("opacity", "0");
+        d3.select("#state-title").text(astate);
 
+      })
+      .on('mouseover', function() { // on mouse in show line, circles and text
+        d3.select(".mouse-line")
+          .style("opacity", "1");
+        d3.selectAll(".mouse-per-line circle")
+          .style("opacity", "1");
+        d3.selectAll(".mouse-per-line text")
+          .style("opacity", "1");
+      })
+      .on('mousemove', function() { // mouse moving over canvas
+        var mouse = d3.mouse(this);
+        d3.select(".mouse-line")
+          .attr("d", function() {
+            var d = "M" + mouse[0] + "," + height;
+            d += " " + mouse[0] + "," + 0;
+            return d;
+          });
 
-        optionsC.exit().remove();
+        d3.selectAll(".mouse-per-line")
+          .attr("transform", function(d, i) {
+            var xDate = xscale.invert(mouse[0]),
+                bisect = d3.bisector(function(d) { return d.date; }).right;
+                bisect(d.values, xDate);
+            let new_xdate = new Date(xDate);
+            d3.select("#state-title").text(astate + ", " + new_xdate.toISOString().substring(0,10));
+            console.log(lines[i]);
+            console.log(lines);
+            console.log(i);
+            var beginning = 0,
+                end = lines[i].getTotalLength(),
+                target = null;
+            var pos = null;
+            while (true){
+              target = Math.floor((beginning + end) / 2);
+              pos = lines[i].getPointAtLength(target);
+              if ((target === end || target === beginning) && pos.x !== mouse[0]) {
+                  break;
+              }
+              if (pos.x > mouse[0])      end = target;
+              else if (pos.x < mouse[0]) beginning = target;
+              else break; //position found
+            }            
+            
+            d3.select(this).select('text')
+              .text(yscale.invert(pos.y).toFixed(2) + "%").style("font-weight", "bolder").style("font-size", "14px");
 
-        let optionsCEnter = optionsC.enter()
-            .append('option')
-            .attr('value', (d, i) => d.indicator);
-
-        optionsCEnter.append('text')
-            .text((d, i) => d.indicator_name);
-
-        optionsC = optionsCEnter.merge(optionsC);
-
-        let selectedC = optionsC.filter(d => d.indicator === circleSizeIndicator)
-            .attr('selected', true);
-
-        dropC.on('change', function(d, i) {
-            let cValue = this.options[this.selectedIndex].value;
-            let xValue = dropX.node().value;
-            let yValue = dropY.node().value;
-            that.updatePlot(that.activeYear, xValue, yValue, cValue);
-        });
-
-        /* X DROPDOWN */
-        let dropX = dropDownWrapper.select('#dropdown_x').select('.dropdown-content').select('select');
-
-        let optionsX = dropX.selectAll('option')
-            .data(dropData);
-
-        optionsX.exit().remove();
-
-        let optionsXEnter = optionsX.enter()
-            .append('option')
-            .attr('value', (d, i) => d.indicator);
-
-        optionsXEnter.append('text')
-            .text((d, i) => d.indicator_name);
-
-        optionsX = optionsXEnter.merge(optionsX);
-
-        let selectedX = optionsX.filter(d => d.indicator === xIndicator)
-            .attr('selected', true);
-
-        dropX.on('change', function(d, i) {
-            let xValue = this.options[this.selectedIndex].value;
-            let yValue = dropY.node().value;
-            let cValue = dropC.node().value;
-            that.updatePlot(that.activeYear, xValue, yValue, cValue);
-        });
-
-        /* Y DROPDOWN */
-        let dropY = dropDownWrapper.select('#dropdown_y').select('.dropdown-content').select('select');
-
-        let optionsY = dropY.selectAll('option')
-            .data(dropData);
-
-        optionsY.exit().remove();
-
-        let optionsYEnter = optionsY.enter()
-            .append('option')
-            .attr('value', (d, i) => d.indicator);
-
-        optionsY = optionsYEnter.merge(optionsY);
-
-        optionsYEnter.append('text')
-            .text((d, i) => d.indicator_name);
-
-        let selectedY = optionsY.filter(d => d.indicator === yIndicator)
-            .attr('selected', true);
-
-        dropY.on('change', function(d, i) {
-            let yValue = this.options[this.selectedIndex].value;
-            let xValue = dropX.node().value;
-            let cValue = dropC.node().value;
-            that.updatePlot(that.activeYear, xValue, yValue, cValue);
-        });
-
+              
+            d3.select(this).insert("rect", "text")
+            .attr("y", -10).attr("x", 10)
+            .attr("width", 45).attr("height", 20)
+            .style("fill", "white").style("opacity", 0.5);
+            
+            return "translate(" + mouse[0] + "," + pos.y +")";
+          });
+      });
     }
 
-    /**
-     * Draws the year bar and hooks up the events of a year change
-     */
-    drawYearBar() {
-
-        // ******* TODO: PART 2 *******
-        //The drop-down boxes are set up for you, but you have to set the slider to updatePlot() on activeYear change
-
-        // Create the x scale for the activeYear;
-        // hint: the domain should be max and min of the years (1800 - 2020); it's OK to set it as numbers
-        // the plot needs to update on move of the slider
-
-        /* ******* TODO: PART 3 *******
-        You will need to call the updateYear() function passed from script.js in your activeYear slider
-        */
-        let that = this;
-
-        //Slider to change the activeYear of the data
-        let yearScale = d3.scaleLinear().domain([1800, 2020]).range([30, 730]);
-
-        let yearSlider = d3.select('#activeYear-bar')
-            .append('div').classed('slider-wrap', true)
-            .append('input').classed('slider', true)
-            .attr('type', 'range')
-            .attr('min', 1800)
-            .attr('max', 2020)
-            .attr('value', this.activeYear);
-
-        let sliderLabel = d3.select('.slider-wrap')
-            .append('div').classed('slider-label', true)
-            .append('svg');
-
-        let sliderText = sliderLabel.append('text').text(this.activeYear);
-
-        let update = year => {
-            this.updatePlot(year, this.xIndicator, this.yIndicator, this.circleSizeIndicator);
-            this.updateYear(year);
-        }
-        sliderText.attr('x', yearScale(this.activeYear));
-        sliderText.attr('y', 25);
-       
-        yearSlider.on('input', function() {
-            const value = this.value;
-            update(value);
-        });
-        
-    }
 
     drawLegend() {
 
@@ -577,13 +489,13 @@ class MobilityPlot {
 
         let legend = d3.select("#chart-view").select("svg").append("g");
         legend.attr("class", "legend").attr("x", 500).attr("y" , 50).selectAll("rect")
-        .data(keys).enter().append("rect").attr("x", 75).attr("y", function(d, i) {return 450 + (i*22)})
+        .data(keys).enter().append("rect").attr("x", function(d, i) { return 100 + 150*i - (d.length*3)}).attr("y", 20)
         .attr("width", 20).attr("height", 20).style("fill", function(d) {return color(d)})
 
         legend.attr("class", "legend").attr("x", 500).attr("y" , 50).selectAll("text")
-        .data(keys).enter().append("text").attr("x", 100).attr("y", function(d, i) {return 465 + (i*22)})
+        .data(keys).enter().append("text").attr("x", function(d, i) { return 125 + 150*i - (d.length*3)}).attr("y", 33)
         .attr("width", 20).attr("height", 20).style("fill", function(d) {return color(d)}).text(function(d) {return d})
-
+        .style("font-size", "15px");
     }
 
     /**

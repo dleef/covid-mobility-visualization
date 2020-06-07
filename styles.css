@@ -244,7 +244,6 @@ div.dropdown-wrapper {
     border-color: #fff transparent transparent transparent;
 }
 
-
 /*point the arrow upwards when the select box is open (active):*/
 
 .select-selected.select-arrow-active:after {
@@ -294,14 +293,14 @@ div.dropdown-wrapper {
 .slider {
     -webkit-appearance: none;
     width: 725px;
-    height: 15px;
+    height: 10px;
     border-radius: 5px;
     background: #d3d3d3;
     outline: none;
     opacity: 0.7;
     -webkit-transition: .2s;
     transition: opacity .2s;
-    margin-left: 20px
+    margin-left: 15px
 }
 
 .slider::-webkit-slider-thumb {
@@ -310,7 +309,7 @@ div.dropdown-wrapper {
     width: 25px;
     height: 25px;
     border-radius: 50%;
-    background: #4CAF50;
+    background: red;
     cursor: pointer;
 }
 
@@ -339,7 +338,7 @@ div.dropdown-wrapper {
     display: inline-block;
     float: left;
     width: 750px;
-    margin-left: 50px;
+    margin-left: 15px;
 }
 
 
@@ -425,6 +424,10 @@ i.europe {
 
 .activeDate-background {
     font-size: 50px;
+    opacity: .4;
+}
+.activeState-background {
+    font-size: 30px;
     opacity: .4;
 }
 

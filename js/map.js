@@ -50,7 +50,7 @@ class Map {
      * @param updateCountry a callback function used to notify other parts of the program when the selected
      * country was updated (clicked)
      */
-    constructor(data, updateState, activedate, mapindicator, updateDate) {
+    constructor(data, updateState, activedate, mapindicator, updateDate, activeState) {
         // ******* TODO: PART I *******
         this.projection = d3.geoAlbersUsa().scale(800).translate([380, 225]);
         this.by_date = {};
@@ -63,6 +63,7 @@ class Map {
         this.active_date = activedate;
         this.map_indicator = mapindicator;
         this.updateDate = updateDate;
+        this.activeState = activeState;
         this.state_abbrev = {
             'Arizona' : 'AZ',
             'Alabama' : 'AL',
@@ -117,9 +118,6 @@ class Map {
         };
     }
 
-
-
-
     changeMap(input, time) {
         var color_deaths = d3.scaleLinear()
         .domain([this.min_deaths, this.max_deaths])
@@ -133,10 +131,9 @@ class Map {
         let date = new Date(time*1000).toISOString().substring(0, 10);
         this.map_indicator = input;
         this.active_date = date;
+        let min_val = 100000000;
+        let max_val = 0;
 
-        console.log(date);
-        console.log(input);
-        console.log(this.by_date[date]);
         
         if (date in this.by_date) {
         
@@ -184,6 +181,12 @@ class Map {
                                         if (stat == -1) {
                                             return "black";
                                         }
+                                        if (stat > max_val) {
+                                            max_val = stat;
+                                        }
+                                        if (stat < min_val) {
+                                            min_val = stat;
+                                        }
                                         return color_deaths(stat);
                                     }
                                     else if (input == "Positive Cases") {
@@ -192,6 +195,12 @@ class Map {
                                         if (stat == -1) {
                                             return "black";
                                         }
+                                        if (stat > max_val) {
+                                            max_val = stat;
+                                        }
+                                        if (stat < min_val) {
+                                            min_val = stat;
+                                        }
                                         return color_positive(stat);
                                     }
                                     else if (input == "Hospitalizations") {
@@ -199,6 +208,12 @@ class Map {
                                         stat = cur.hospitalized;
                                         if (stat == -1) {
                                             return "black";
+                                        }
+                                        if (stat > max_val) {
+                                            max_val = stat;
+                                        }
+                                        if (stat < min_val) {
+                                            min_val = stat;
                                         }
                                         return color_hospitalized(stat);
                                     }
@@ -209,6 +224,12 @@ class Map {
                                         if (stat == -1) {
                                             return "black";
                                         }
+                                        if (stat > max_val) {
+                                            max_val = stat;
+                                        }
+                                        if (stat < min_val) {
+                                            min_val = stat;
+                                        }
                                         return color_deaths(stat);
                                     }
                                 }
@@ -218,7 +239,7 @@ class Map {
         });
 
     }
-
+        this.drawLegend(min_val, max_val);
     }
 
     createDropdown(inputIndicator) {
@@ -397,7 +418,7 @@ class Map {
 
         });
         this.drawYearBar();
-
+        this.updateHighlightClick(this.activeState);
     }
 
         /**
@@ -440,6 +461,7 @@ class Map {
             this.active_date = value;
             update(value);
         });
+
         
     }
 
@@ -449,7 +471,6 @@ class Map {
      * @param activeCountry the country ID of the country to be rendered as selected/highlighted
      */
     updateHighlightClick(activeState) {
-        console.log(activeState);
         let new_name = activeState.replace(" ", "-");
         // ******* TODO: PART 3*******
         // Assign selected class to the target country and corresponding region
@@ -463,48 +484,27 @@ class Map {
 
     }
 
-    /**
-     * Clears all highlights
-     */
+
     clearHighlight() {
-        // ******* TODO: PART 3*******
-        // Clear the map of any colors/markers; You can do this with inline styling or by
-        // defining a class style in styles.css
 
-        // Hint: If you followed our suggestion of using classes to style
-        // the colors and markers for hosts/teams/winners, you can use
-        // d3 selection and .classed to set these classes off here.
-
-        //TODO - Your code goes here - 
         d3.selectAll('path').classed('selected', false);
 
     }
     drawLegend(min, max) {
-        // ******* TODO: PART 2*******
-        //This has been done for you but you need to call it in updatePlot()!
-        //Draws the circle legend to show size based on health data
-        let scale = d3.scaleSqrt().range([3, 20]).domain([min, max]);
-
-        let circleData = [min, max];
-
-        let svg = d3.select('.circle-legend').select('svg').select('g');
-
-        let circleGroup = svg.selectAll('g').data(circleData);
-        circleGroup.exit().remove();
-
-        let circleEnter = circleGroup.enter().append('g');
-        circleEnter.append('circle').classed('neutral', true);
-        circleEnter.append('text').classed('circle-size-text', true);
-
-        circleGroup = circleEnter.merge(circleGroup);
-
-        circleGroup.attr('transform', (d, i) => 'translate(' + ((i * (5 * scale(d))) + 20) + ', 25)');
-
-        circleGroup.select('circle').attr('r', (d) => scale(d));
-        circleGroup.select('circle').attr('cx', '0');
-        circleGroup.select('circle').attr('cy', '0');
-        let numText = circleGroup.select('text').text(d => new Intl.NumberFormat().format(d));
-
-        numText.attr('transform', (d) => 'translate(' + ((scale(d)) + 10) + ', 0)');
+        console.log("Min: " + min + ", max: " + max);
+        var defs = d3.select("#map-chart").select("svg").append("defs");
+        var linearGradient = defs.append("linearGradient").attr("id", "linear-gradient");
+        linearGradient
+        .attr("x1", "0%")
+        .attr("y1", "0%")
+        .attr("x2", "100%")
+        .attr("y2", "0%");
+        linearGradient.append("stop").attr("offset", "0%").attr("stop-color", "lightblue");
+        linearGradient.append("stop").attr("offset", "100%").attr("stop-color", "red");
+        d3.select("#map-chart").select("svg").append("rect").attr("width", 300).attr("height", 20).style("fill", "url(#linear-gradient)");
+        d3.select("#map-chart").select("svg").append("text").attr("text-anchor", "start").attr("x", 4)
+        .attr("y", 14).text(min);
+        d3.select("#map-chart").select("svg").append("text").attr("text-anchor", "end").attr("x", 300)
+        .attr("y", 14).text(max);
     }
 }
