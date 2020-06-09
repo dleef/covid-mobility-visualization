@@ -1,118 +1,133 @@
-/** Data structure for the data associated with an individual country. */
-class InfoBoxData {
-    /**
-     *
-     * @param country name of the active country
-     * @param region region of the active country
-     * @param indicator_name the label name from the data category
-     * @param value the number value from the active year
-     */
-    constructor(country, region, indicator_name, value) {
-        this.country = country;
-        this.region = region;
-        this.indicator_name = indicator_name;
-        this.value = value;
+class StateInfoData {
+
+    constructor(state, positive, deaths, hospitalized, date) {
+        this.state = state;
+        this.positive = positive;
+        this.deaths = deaths;
+        this.hospitalized = hospitalized;
+        this.date = date;
     }
 }
 
-/** Class representing the highlighting and selection interactivity. */
-class InfoBox {
-    /**
-     * Creates a InfoBox Object
-     * @param data the full data array
-     */
+class StateInfo {
+
     constructor(data) {
         this.data = data;
+        this.state_abbrev = {
+            'Arizona' : 'AZ',
+            'Alabama' : 'AL',
+            'Alaska' : 'AK',
+            'Arkansas' : 'AR',
+            'California' : 'CA',
+            'Colorado' : 'CO',
+            'Connecticut' : 'CT',
+            'Delaware' : 'DE',
+            'Florida' : 'FL',
+            'Georgia' : 'GA',
+            'Hawaii' : 'HI',
+            'Idaho' : 'ID',
+            'Illinois' : 'IL',
+            'Indiana' : 'IN',
+            'Iowa' : 'IA',
+            'Kansas' : 'KS',
+            'Kentucky' : 'KY',
+            'Louisiana': 'LA',
+            'Maine': 'ME',
+            'Maryland': 'MD',
+            'Massachusetts': 'MA',
+            'Michigan': 'MI',
+            'Minnesota':'MN',
+            'Mississippi':'MS',
+            'Missouri': 'MO',
+            'Montana':'MT',
+            'Nebraska': 'NE',
+            'Nevada': 'NV',
+            'New Hampshire': 'NH',
+            'New Jersey': 'NJ',
+            'New Mexico': 'NM',
+            'New York': 'NY',
+            'North Carolina': 'NC',
+            'North Dakota': 'ND',
+            'Ohio':'OH',
+            'Oklahoma': 'OK',
+            'Oregon': 'OR',
+            'Pennsylvania': 'PA',
+            'Rhode Island': 'RI',
+            'South Carolina': 'SC',
+            'South Dakota': 'SD',
+            'Tennessee': 'TN',
+            'Texas': 'TX',
+            'Utah': 'UT',
+            'Vermont': 'VT',
+            'Virginia': 'VA',
+            'Washington': 'WA',
+            'West Virginia': 'WV',
+            'Wisconsin': 'WI',
+            'Wyoming': 'WY'
+        };
     }
 
-    /**
-     * Renders the country description
-     * @param activeCountry the IDs for the active country
-     * @param activeYear the year to render the data for
-     */
-    updateTextDescription(activeCountry, activeYear) {
-        // ******* TODO: PART 4 *******
-        // Update the text elements in the infoBox to reflect:
-        // Selected country, region, population and stats associated with the country.
-        console.log("ACTIVE COUNTRY: ", activeCountry);
-        console.log("ACTIVE YEAR: ", activeYear);
 
-        let pop = d3.values(this.data['population']);
-        let gdp = d3.values(this.data['gdp']);
-        let ferility = d3.values(this.data['fertility-rate']);
-        let life = d3.values(this.data['life-expectancy']);
-        let mortality = d3.values(this.data['child-mortality']);
-        var region;
-        var country;
-        var infoData = [];
+    updateTextDescription(activeState, activeDate) {
+        
+        let covid = d3.values(this.data.covid);
+        var info = null;
 
-        pop.forEach(p => {
-
-            if (p.geo.toUpperCase() == activeCountry) {
-                region = p.region;
-                country = p.country;
-                infoData.push(new InfoBoxData(p.country, p.region, 'Population', p[activeYear]));
+        let new_state = activeState.replace("-", " ");
+        covid.forEach(p => {
+            let string_date = "" + p.date;
+            let new_string_date = string_date.slice(0, 4) + "-" + string_date.slice(4,6) + "-" + string_date.slice(6, 8);
+            let date = new_string_date;
+            if (date == activeDate && p.state == this.state_abbrev[new_state]) {
+                info = new StateInfoData(activeState, p.positive == null ? -1 : p.positive, p.death == null ? -1 : p.death, p.hospitalizedCurrently == null ? (p.hospitalizedCumulative == null ? -1 : p.hospitalizedCumulative) : p.hospitalizedCurrently, activeDate);
             }
-        })
-        gdp.forEach(p => {
-
-            if (p.geo.toUpperCase() == activeCountry) {
-                infoData.push(new InfoBoxData(p.country, region, p.indicator_name, p[activeYear]));
-            }
-        })
-        ferility.forEach(p => {
-
-            if (p.geo.toUpperCase() == activeCountry) {
-                infoData.push(new InfoBoxData(p.country, region, p.indicator_name, p[activeYear]));
-            }
-        })
-        life.forEach(p => {
-
-            if (p.geo.toUpperCase() == activeCountry) {
-                infoData.push(new InfoBoxData(p.country, region, p.indicator_name, p[activeYear]));
-            }
-        })
-        mortality.forEach(p => {
-
-            if (p.geo.toUpperCase() == activeCountry) {
-                infoData.push(new InfoBoxData(p.country, region, p.indicator_name, p[activeYear]));
-            }
-        })
-
+        });
         d3.select("#country-detail").selectAll("*").remove();
         d3.select("#country-detail").append("div")
-        .attr('class', 'label').text(country);
+        .attr('class', 'label').text(new_state);
 
-        infoData.forEach(entry => {
         let cur = d3.select("#country-detail").append("div")
-        .attr('class', 'stat').append('text').text(entry.indicator_name + ": ");
-        
-        cur.append('text').text(entry.value).style("font-weight", 1000);
-        })
+        .attr('class', 'stat').append('text').text("Positive Cases: ");
+        if (info.positive == -1) {
+            cur.append('text').text(" - ").style("font-weight", 1000);
+        }
+        else {
+            cur.append('text').text(info.positive).style("font-weight", 1000);
+        }
 
-        /*
-         * You will need to get an array of the values for each category in your data object
-         * hint: you can do this by using Object.values(this.data)
-         * you will then need to filter just the activeCountry data from each array
-         * you will then pass the data as paramters to make an InfoBoxData object for each category
-         *
-         */
+        let cur2 = d3.select("#country-detail").append("div")
+        .attr('class', 'stat').append('text').text("Deaths: ");
+        if (info.deaths == -1) {
+            cur2.append('text').text(" - ").style("font-weight", 1000);
+        }
+        else {
+            cur2.append('text').text(info.deaths).style("font-weight", 1000);
+        }
 
+        let cur3 = d3.select("#country-detail").append("div")
+        .attr('class', 'stat').append('text').text("Hospitalized: ");
+        if (info.hospitalized == -1) {
+            cur3.append('text').text(" - ").style("font-weight", 1000);
+        }
+        else {
+            cur3.append('text').text(info.hospitalized).style("font-weight", 1000);
+        }
 
-
-        //TODO - Your code goes here - 
-
+        let cur4 = d3.select("#country-detail").append("div")
+        .attr('class', 'stat').append('text').text("Date: ");
+        if (info.date == -1) {
+            cur4.append('text').text(" - ").style("font-weight", 1000);
+        }
+        else {
+            cur4.append('text').text(info.date).style("font-weight", 1000);
+        }
 
     }
 
-    /**
-     * Removes or makes invisible the info box
-     */
     clearHighlight() {
 
         d3.select("#country-detail").selectAll("*").remove();
 
-        //TODO - Your code goes here - 
     }
 
 }

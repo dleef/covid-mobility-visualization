@@ -1,13 +1,19 @@
 loadData().then(data => {
     
     this.activeDate = '2020-04-24';
+    this.activeState = 'Oregon';
     const stateMap = new Map(data, updateState, activeDate, 'Positive Cases', updateDate, 'Oregon');
     const mobilityPlot = new MobilityPlot(data, 'Oregon');
+    const infoBox = new StateInfo(data);
+
     mobilityPlot.updatePlot('Oregon');
+    infoBox.updateTextDescription(activeState, activeDate)
 
     function updateState(state) {
+            activeState = state;
             stateMap.updateHighlightClick(state);
             mobilityPlot.updatePlot(state);
+            infoBox.updateTextDescription(state, activeDate);
     }
     function updateDate(date) {
         
@@ -17,7 +23,8 @@ loadData().then(data => {
             .select('div')
             .select('svg')
             .select('text').text(translated);
-        
+
+        infoBox.updateTextDescription(activeState, translated);
         d3.select("#year-title").text(translated);
         
 
@@ -29,7 +36,6 @@ loadData().then(data => {
 
     document.addEventListener("click", function(e) {
         stateMap.clearHighlight();
-
     }, true);
     
 });

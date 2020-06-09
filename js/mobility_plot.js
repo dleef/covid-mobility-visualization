@@ -1,12 +1,3 @@
-class PlotData {
-    constructor(state, xVal, yVal, id, type) {
-        this.state = state;
-        this.xVal = xVal;
-        this.yVal = yVal;
-        this.id = id;
-        this.type = type;
-    }
-}
 
 class DateData {
 
@@ -345,7 +336,7 @@ class MobilityPlot {
 
     updateHoverLine(xscale, yscale, astate) {
         let width = 800 - this.margin.left - this.margin.right;
-        let height = 675 - this.margin.top - this.margin.bottom;
+        let height = 690 - this.margin.top - this.margin.bottom;
         var lines = document.getElementsByClassName('mobility_line');
 
         this.mg.append('svg:rect')
@@ -426,7 +417,7 @@ class MobilityPlot {
 
     let svg = d3.select("#chart-view").select("svg").append("g");
     let width = 800 - this.margin.left - this.margin.right;
-    let height = 685 - this.margin.top - this.margin.bottom;
+    let height = 690 - this.margin.top - this.margin.bottom;
     var mouseG = svg.append("g")
       .attr("class", "mouse-over-effects");
     mouseG.append("path") 
