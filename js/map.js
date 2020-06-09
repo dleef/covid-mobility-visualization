@@ -211,7 +211,6 @@ class Map {
 
     }
     
-    // filter this.by_date to only include entries with 50 or more states entered
     parsePerState(cdata) {  
         var output = []
         var max_deaths = 0;
@@ -226,7 +225,6 @@ class Map {
             let string_date = "" + c['date']
             let new_string_date = string_date.slice(0, 4) + "-" + string_date.slice(4,6) + "-" + string_date.slice(6, 8);
             let date = new_string_date;
-            //if (c['positive'] != null && c['death'] != null && c['hospitalizedCurrently'] != null) {
 
             if (date >= "2020-03-07") {
 
@@ -289,7 +287,6 @@ class Map {
         let path = d3.geoPath().projection(this.projection);    
         this.createDropdown(this.map_indicator);
 
-        // default to max deaths
         var color = d3.scaleLinear()
         .domain([0, this.max_positive])
         .range(["lightblue", "red"]); 
@@ -297,7 +294,6 @@ class Map {
         let graticule = d3.geoGraticule();
         d3.select("#map-chart").append('svg').selectAll("path").data(states.features).join("path").attr("d", path);
         d3.select("#map-chart").select('svg').append('path').datum(graticule.outline).attr('class', 'stroke').attr('d', path);
-        // d3.select("#map-chart").select('svg').append('path').datum(graticule).attr('class', "graticule").attr('d', path).attr('fill', 'none');
 
         d3.select("#map-chart").select('svg').append("text").attr('id', 'year-title').attr("dx", 250).attr("dy", 75).attr('class', 'activeDate-background').text(this.active_date);
 
@@ -317,7 +313,7 @@ class Map {
             let new_name = name.replace(" ", "-");
                 d3.select("#map-chart").select('svg').append('path').attr('d', path(state.geometry)).style('stroke', 'white').style('stroke-width', '0.5').attr('id', new_name).
                 style("fill", function(d) {
-                    // defaulting to deaths for now
+                    // defaults to positive
                     var stat;
                     for (var j = 0; j < cdata.length; j++) {
 
@@ -355,14 +351,10 @@ class Map {
 
     }
 
-        /**
-     * Draws the year bar and hooks up the events of a year change
-     */
     drawYearBar() {
         d3.select('#outside')
             .append('div').attr('id', 'activeYear-bar');
 
-        //Slider to change the activeYear of the data
         let scale = d3.scaleLinear().domain([new Date(this.min_date).getTime() / 1000, new Date(this.max_date).getTime() / 1000]).range([30, 730]);
 
         let yearSlider = d3.select('#activeYear-bar')
